@@ -1,0 +1,2272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FEDGE 2.O - Business Hub</title>
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --panel: #ffffff;
+    --ink: #111318;
+    --muted: #606875;
+    --soft: #e7eaf0;
+    --line: #dce1e8;
+    --dark: #090b0f;
+    --blue: #265df2;
+    --green: #16a34a;
+    --amber: #c27a07;
+    --pink: #db2777;
+    --cyan: #0891b2;
+    --shadow: 0 18px 50px rgba(15, 23, 42, 0.09);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    color: var(--ink);
+    background:
+      linear-gradient(180deg, #ffffff 0, var(--bg) 420px),
+      var(--bg);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  }
+
+  button, input { font: inherit; }
+
+  .shell { max-width: 1180px; margin: 0 auto; padding: 0 22px; }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    border-bottom: 1px solid rgba(220, 225, 232, 0.85);
+    background: rgba(255, 255, 255, 0.84);
+    backdrop-filter: blur(16px);
+  }
+
+  .nav {
+    min-height: 68px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 22px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .mark {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-weight: 850;
+    letter-spacing: 0;
+    background: #111318;
+    box-shadow: inset 0 -10px 18px rgba(255, 255, 255, 0.1);
+  }
+
+  .brand strong { display: block; font-size: 15px; line-height: 1.15; }
+  .brand span { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+  .navlinks {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #3d4450;
+    font-size: 14px;
+  }
+
+  .navlinks a {
+    color: inherit;
+    text-decoration: none;
+    padding: 9px 12px;
+    border-radius: 8px;
+  }
+
+  .navlinks a:hover { background: #eef2f7; }
+
+  .nav-actions { display: flex; align-items: center; gap: 10px; }
+
+  .btn {
+    border: 1px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 0 14px;
+    text-decoration: none;
+    color: var(--ink);
+    font-weight: 760;
+    white-space: nowrap;
+  }
+
+  .btn.dark { background: var(--dark); color: #fff; }
+  .btn.light { background: #fff; border-color: var(--line); }
+  .btn.blue { background: var(--blue); color: #fff; }
+  .btn:hover { transform: translateY(-1px); }
+
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(360px, 0.92fr);
+    gap: 28px;
+    padding: 34px 0 22px;
+    align-items: stretch;
+  }
+
+  .hero-copy {
+    padding: 42px 0 20px;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 30px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: #ecfdf3;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+    font-size: 13px;
+    font-weight: 750;
+  }
+
+  .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  h1 {
+    margin: 18px 0 14px;
+    max-width: 760px;
+    font-size: clamp(42px, 7vw, 76px);
+    line-height: 0.94;
+    letter-spacing: 0;
+  }
+
+  .lead {
+    margin: 0;
+    max-width: 670px;
+    color: #4f5865;
+    font-size: 18px;
+    line-height: 1.6;
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 24px;
+  }
+
+  .creator-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 28px;
+  }
+
+  .chip {
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 8px;
+    padding: 9px 11px;
+    color: #4c5562;
+    font-size: 13px;
+    font-weight: 680;
+  }
+
+  .showcase {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .showcase-head {
+    background: #101217;
+    color: #fff;
+    padding: 18px;
+  }
+
+  .showcase-head .mini {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #aeb7c5;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .showcase-head h2 {
+    margin: 26px 0 8px;
+    font-size: 28px;
+    letter-spacing: 0;
+  }
+
+  .showcase-head p { margin: 0; color: #cbd5e1; line-height: 1.45; }
+
+  .progress-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding: 14px;
+    background: #f8fafc;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .metric {
+    min-width: 0;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    padding: 12px;
+  }
+
+  .metric b { display: block; font-size: 20px; }
+  .metric span { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+  .offer-list { padding: 14px; display: grid; gap: 10px; }
+
+  .offer {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    padding: 13px;
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .offer-badge {
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-weight: 850;
+    background: var(--blue);
+  }
+
+  .offer h3 { margin: 0 0 3px; font-size: 15px; }
+  .offer p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.35; }
+
+  .price {
+    font-weight: 850;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  .section {
+    padding: 20px 0;
+  }
+
+  .section-head {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 14px;
+  }
+
+  .section-head h2 {
+    margin: 0;
+    font-size: 25px;
+    letter-spacing: 0;
+  }
+
+  .section-head p {
+    margin: 5px 0 0;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .app-card {
+    border: 1px solid var(--line);
+    background: var(--panel);
+    border-radius: 8px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+    padding: 15px;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    cursor: pointer;
+    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  }
+
+  .app-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.1);
+    border-color: #b8c2d0;
+  }
+
+  .card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-weight: 850;
+    background: var(--blue);
+  }
+
+  .status {
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid #bbf7d0;
+    color: #15803d;
+    background: #f0fdf4;
+    border-radius: 999px;
+    padding: 0 9px;
+    font-size: 12px;
+    font-weight: 750;
+  }
+
+  .app-card h3 { margin: 0; font-size: 17px; }
+  .app-card p { margin: 6px 0 0; color: var(--muted); line-height: 1.45; font-size: 13px; }
+
+  .mini-stats {
+    margin-top: auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .mini-stat {
+    border: 1px solid #edf0f4;
+    border-radius: 8px;
+    padding: 8px;
+    background: #fafbfc;
+  }
+
+  .mini-stat b { display: block; font-size: 14px; }
+  .mini-stat span { color: var(--muted); font-size: 11px; }
+
+  .commerce {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+  }
+
+  .repo-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .repo-card {
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 8px;
+    padding: 15px;
+    min-height: 148px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    text-decoration: none;
+    color: var(--ink);
+    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  }
+
+  .repo-card:hover {
+    transform: translateY(-3px);
+    border-color: #b8c2d0;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.1);
+  }
+
+  .repo-card h3 {
+    margin: 0;
+    font-size: 16px;
+    overflow-wrap: anywhere;
+  }
+
+  .repo-card p {
+    margin: 5px 0 0;
+    color: var(--muted);
+    line-height: 1.45;
+    font-size: 13px;
+  }
+
+  .repo-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: auto;
+  }
+
+  .repo-pill {
+    border: 1px solid #e5e7eb;
+    background: #f8fafc;
+    color: #475569;
+    border-radius: 999px;
+    padding: 5px 8px;
+    font-size: 12px;
+    font-weight: 760;
+  }
+
+  .repo-pill.private {
+    border-color: #fed7aa;
+    background: #fff7ed;
+    color: #9a3412;
+  }
+
+  .legend-panel {
+    border: 1px solid var(--line);
+    background:
+      radial-gradient(circle at 14% 16%, rgba(37, 99, 235, 0.14), transparent 26%),
+      radial-gradient(circle at 84% 10%, rgba(22, 163, 74, 0.13), transparent 28%),
+      #fff;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .legend-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 20px;
+    padding: 22px;
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .legend-hero h3 {
+    margin: 0 0 8px;
+    font-size: 28px;
+  }
+
+  .legend-hero p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.55;
+    max-width: 760px;
+  }
+
+  .shard-counter {
+    min-width: 160px;
+    border: 1px solid #bfdbfe;
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-radius: 8px;
+    padding: 14px;
+    text-align: center;
+  }
+
+  .shard-counter b {
+    display: block;
+    font-size: 34px;
+    line-height: 1;
+  }
+
+  .shard-counter span {
+    display: block;
+    font-size: 12px;
+    font-weight: 780;
+    margin-top: 5px;
+  }
+
+  .quest-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .quest-card {
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.78);
+    border-radius: 8px;
+    padding: 14px;
+    min-height: 178px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .quest-card h4 {
+    margin: 0;
+    font-size: 15px;
+  }
+
+  .quest-card p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.42;
+    font-size: 13px;
+  }
+
+  .quest-progress {
+    margin-top: auto;
+  }
+
+  .quest-progress span {
+    display: flex;
+    justify-content: space-between;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 780;
+    margin-bottom: 7px;
+  }
+
+  .bar-track {
+    height: 8px;
+    border-radius: 999px;
+    background: #e5e7eb;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: var(--blue);
+  }
+
+  .plan {
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 8px;
+    padding: 18px;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
+  }
+
+  .plan.featured {
+    border-color: #1d4ed8;
+    box-shadow: 0 22px 54px rgba(37, 99, 235, 0.16);
+  }
+
+  .plan h3 { margin: 0; font-size: 18px; }
+  .plan p { color: var(--muted); line-height: 1.5; min-height: 42px; }
+  .plan .amount { font-size: 34px; font-weight: 900; margin: 14px 0 4px; }
+  .plan small { color: var(--muted); }
+
+  .features {
+    list-style: none;
+    padding: 0;
+    margin: 16px 0;
+    display: grid;
+    gap: 9px;
+    color: #3c4654;
+    font-size: 14px;
+  }
+
+  .features li::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    display: inline-block;
+    margin-right: 9px;
+    transform: translateY(-1px);
+  }
+
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(5, 8, 13, 0.62);
+    backdrop-filter: blur(10px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 22px;
+    z-index: 80;
+  }
+
+  .modal.open { display: flex; }
+
+  .modal-card {
+    width: min(760px, 100%);
+    max-height: min(720px, 92vh);
+    overflow: hidden;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.26);
+    border: 1px solid var(--line);
+  }
+
+  .modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .modal-head h2 { margin: 0; font-size: 18px; }
+  .modal-head span { color: var(--muted); font-size: 13px; }
+
+  .modal-body { padding: 18px; background: #f8fafc; }
+
+  .log {
+    height: 270px;
+    overflow: auto;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #0d1117;
+    color: #dbeafe;
+    padding: 12px;
+    font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  .command {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .command input {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 0 12px;
+    height: 42px;
+    outline: none;
+  }
+
+  .footer {
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    padding: 24px 0 34px;
+    margin-top: 26px;
+    font-size: 13px;
+  }
+
+  .hq-game {
+    border: 1px solid var(--line);
+    background:
+      radial-gradient(circle at 12% 14%, rgba(38, 93, 242, 0.16), transparent 25%),
+      radial-gradient(circle at 88% 8%, rgba(22, 163, 74, 0.13), transparent 26%),
+      linear-gradient(180deg, #fff, #f8fafc);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .game-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 18px;
+    padding: 18px;
+    border-bottom: 1px solid var(--line);
+    align-items: center;
+  }
+
+  .game-top h2 {
+    margin: 0 0 6px;
+    font-size: 28px;
+  }
+
+  .game-top p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .game-score {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    min-width: 340px;
+  }
+
+  .score-tile {
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 8px;
+    padding: 10px;
+  }
+
+  .score-tile b {
+    display: block;
+    font-size: 22px;
+  }
+
+  .score-tile span {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 760;
+  }
+
+  .game-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .office-map {
+    min-height: 560px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background:
+      linear-gradient(90deg, rgba(15, 23, 42, 0.045) 1px, transparent 1px),
+      linear-gradient(rgba(15, 23, 42, 0.045) 1px, transparent 1px),
+      #eef3fa;
+    background-size: 34px 34px;
+    padding: 14px;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(150px, 1fr));
+    grid-template-rows: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+
+  .office-room {
+    position: relative;
+    border: 1px solid #cad3e1;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.82);
+    min-height: 150px;
+    padding: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  }
+
+  .office-room:hover {
+    transform: translateY(-2px);
+    border-color: #94a3b8;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.12);
+  }
+
+  .office-room.meeting {
+    grid-column: span 2;
+    background:
+      radial-gradient(circle at 50% 46%, rgba(37, 99, 235, 0.15), transparent 32%),
+      #101217;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .office-room.selected {
+    outline: 3px solid rgba(38, 93, 242, 0.2);
+    border-color: var(--blue);
+  }
+
+  .room-label {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    align-items: start;
+  }
+
+  .room-label h3 {
+    margin: 0;
+    font-size: 15px;
+  }
+
+  .room-label span {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 760;
+  }
+
+  .meeting .room-label span { color: #9ca3af; }
+
+  .desk {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 14px;
+    height: 42px;
+    border-radius: 8px;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.76), rgba(226, 232, 240, 0.92)),
+      #e2e8f0;
+    border: 1px solid #cbd5e1;
+  }
+
+  .desk::before {
+    content: "";
+    position: absolute;
+    width: 38px;
+    height: 23px;
+    right: 14px;
+    top: -24px;
+    border-radius: 5px 5px 2px 2px;
+    background: #111827;
+    box-shadow: inset 0 0 0 4px #334155;
+  }
+
+  .agent-person {
+    position: absolute;
+    z-index: 3;
+    left: 22px;
+    bottom: 42px;
+    width: 52px;
+    height: 74px;
+    transition: left 380ms ease, bottom 380ms ease, transform 380ms ease;
+  }
+
+  .agent-person.in-meeting {
+    left: calc(50% - 26px);
+    bottom: 34px;
+    transform: scale(0.9);
+  }
+
+  .agent-head {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--blue);
+    margin: 0 auto;
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-weight: 900;
+    font-size: 13px;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
+  }
+
+  .agent-body {
+    width: 44px;
+    height: 34px;
+    border-radius: 13px 13px 7px 7px;
+    background: #111827;
+    margin: -3px auto 0;
+    border: 4px solid rgba(255, 255, 255, 0.8);
+  }
+
+  .room-chip {
+    position: absolute;
+    top: 44px;
+    left: 12px;
+    z-index: 2;
+    border: 1px solid #e5e7eb;
+    background: rgba(255, 255, 255, 0.76);
+    border-radius: 999px;
+    padding: 5px 8px;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 780;
+  }
+
+  .meeting-table {
+    width: min(230px, 78%);
+    height: 78px;
+    border-radius: 50%;
+    margin: 22px auto 6px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background:
+      radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.12), transparent 34%),
+      #1f2937;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.28);
+  }
+
+  .meeting-ring {
+    position: absolute;
+    inset: 62px 28px 22px;
+    border: 1px dashed rgba(255, 255, 255, 0.18);
+    border-radius: 8px;
+    pointer-events: none;
+  }
+
+  .game-side {
+    display: grid;
+    gap: 12px;
+    align-content: start;
+  }
+
+  .game-panel {
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 8px;
+    padding: 14px;
+  }
+
+  .game-panel h3 {
+    margin: 0 0 9px;
+    font-size: 16px;
+  }
+
+  .selected-agent {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .selected-agent .agent-head {
+    width: 48px;
+    height: 48px;
+  }
+
+  .selected-agent b {
+    display: block;
+    overflow-wrap: anywhere;
+  }
+
+  .selected-agent span {
+    display: block;
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 2px;
+  }
+
+  .meeting-log {
+    height: 164px;
+    overflow: auto;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #0d1117;
+    color: #dbeafe;
+    padding: 10px;
+    font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  .quest-list {
+    display: grid;
+    gap: 8px;
+  }
+
+  .quest-button {
+    border: 1px solid var(--line);
+    background: #f8fafc;
+    color: #111318;
+    border-radius: 8px;
+    min-height: 42px;
+    padding: 8px 10px;
+    cursor: pointer;
+    text-align: left;
+    font-weight: 780;
+  }
+
+  .quest-button:hover { background: #eef2ff; border-color: #bfdbfe; }
+
+  .hq-game.deluxe {
+    background:
+      radial-gradient(circle at 18% 8%, rgba(38, 93, 242, 0.2), transparent 28%),
+      radial-gradient(circle at 80% 12%, rgba(8, 145, 178, 0.18), transparent 24%),
+      linear-gradient(135deg, #ffffff 0%, #f2f6fb 44%, #eaf1fb 100%);
+  }
+
+  .game-top.deluxe {
+    background:
+      linear-gradient(90deg, rgba(9, 11, 15, 0.97), rgba(18, 28, 46, 0.95)),
+      #101217;
+    color: #fff;
+    border-bottom: 0;
+    padding: 22px;
+  }
+
+  .game-top.deluxe p { color: #cbd5e1; }
+
+  .game-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    color: #93c5fd;
+    background: rgba(59, 130, 246, 0.13);
+    border: 1px solid rgba(147, 197, 253, 0.28);
+    font-size: 12px;
+    font-weight: 820;
+    margin-bottom: 10px;
+  }
+
+  .game-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .game-top.deluxe .score-tile {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.14);
+    color: #fff;
+  }
+
+  .game-top.deluxe .score-tile span { color: #9ca3af; }
+
+  .office-map.deluxe {
+    min-height: 670px;
+    grid-template-columns: repeat(5, minmax(130px, 1fr));
+    grid-template-rows: repeat(4, minmax(124px, 1fr));
+    background:
+      linear-gradient(30deg, rgba(38, 93, 242, 0.06) 12%, transparent 12.5%, transparent 87%, rgba(38, 93, 242, 0.06) 87.5%),
+      linear-gradient(150deg, rgba(8, 145, 178, 0.05) 12%, transparent 12.5%, transparent 87%, rgba(8, 145, 178, 0.05) 87.5%),
+      linear-gradient(30deg, rgba(15, 23, 42, 0.04) 12%, transparent 12.5%, transparent 87%, rgba(15, 23, 42, 0.04) 87.5%),
+      #e9f0f8;
+    background-size: 76px 132px;
+    perspective: 1200px;
+  }
+
+  .office-room.deluxe {
+    min-height: 132px;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 252, 0.86));
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
+  }
+
+  .office-room.deluxe::after {
+    content: "";
+    position: absolute;
+    inset: auto 12px 8px 12px;
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.09);
+    filter: blur(6px);
+  }
+
+  .office-room.deluxe.selected {
+    box-shadow: 0 18px 40px rgba(37, 99, 235, 0.18);
+  }
+
+  .office-room.boardroom {
+    grid-column: 2 / span 3;
+    grid-row: 2 / span 2;
+    min-height: 280px;
+    background:
+      radial-gradient(circle at 50% 54%, rgba(96, 165, 250, 0.22), transparent 34%),
+      linear-gradient(135deg, #070a12, #111827 58%, #172033);
+    color: #fff;
+  }
+
+  .office-room.boardroom .btn {
+    position: relative;
+    z-index: 4;
+    align-self: center;
+    margin-bottom: 10px;
+  }
+
+  .boardroom-screen {
+    position: relative;
+    z-index: 2;
+    border: 1px solid rgba(147, 197, 253, 0.18);
+    background: rgba(2, 6, 23, 0.62);
+    border-radius: 8px;
+    padding: 10px;
+    margin-top: 10px;
+    color: #bfdbfe;
+    font-size: 12px;
+    min-height: 70px;
+  }
+
+  .boardroom-screen b {
+    display: block;
+    color: #fff;
+    margin-bottom: 6px;
+  }
+
+  .meeting-table.deluxe {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 250px;
+    height: 112px;
+    transform: translate(-50%, -30%);
+    margin: 0;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(96, 165, 250, 0.22), transparent 34%),
+      linear-gradient(180deg, #273449, #111827);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+  }
+
+  .agent-person.deluxe {
+    filter: drop-shadow(0 10px 14px rgba(15, 23, 42, 0.24));
+  }
+
+  .agent-person.deluxe::before,
+  .agent-person.deluxe::after {
+    content: "";
+    position: absolute;
+    top: 16px;
+    width: 8px;
+    height: 22px;
+    border-radius: 999px;
+    background: #111827;
+  }
+
+  .agent-person.deluxe::before { left: 6px; transform: rotate(16deg); }
+  .agent-person.deluxe::after { right: 6px; transform: rotate(-16deg); }
+
+  .agent-person.deluxe .agent-head {
+    border: 3px solid rgba(255, 255, 255, 0.94);
+  }
+
+  .agent-person.deluxe .agent-head::before,
+  .agent-person.deluxe .agent-head::after {
+    content: "";
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.92);
+    position: absolute;
+    top: 15px;
+  }
+
+  .agent-person.deluxe .agent-head { position: relative; }
+  .agent-person.deluxe .agent-head::before { left: 12px; }
+  .agent-person.deluxe .agent-head::after { right: 12px; }
+
+  .agent-person.in-meeting[data-seat="0"] { left: 28%; bottom: 148px; }
+  .agent-person.in-meeting[data-seat="1"] { left: 42%; bottom: 170px; }
+  .agent-person.in-meeting[data-seat="2"] { left: 56%; bottom: 148px; }
+  .agent-person.in-meeting[data-seat="3"] { left: 66%; bottom: 104px; }
+  .agent-person.in-meeting[data-seat="4"] { left: 54%; bottom: 72px; }
+  .agent-person.in-meeting[data-seat="5"] { left: 40%; bottom: 72px; }
+  .agent-person.in-meeting[data-seat="6"] { left: 24%; bottom: 104px; }
+  .agent-person.in-meeting[data-seat="7"] { left: 72%; bottom: 154px; }
+  .agent-person.in-meeting[data-seat="8"] { left: 18%; bottom: 154px; }
+
+  .speech-bubble {
+    position: absolute;
+    z-index: 5;
+    top: 14px;
+    right: 16px;
+    max-width: 250px;
+    border: 1px solid rgba(147, 197, 253, 0.28);
+    background: rgba(255, 255, 255, 0.94);
+    color: #111827;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 12px;
+    line-height: 1.38;
+    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.16);
+  }
+
+  .game-side.deluxe {
+    grid-template-rows: auto auto auto 1fr;
+  }
+
+  .agent-roster {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .roster-button {
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 8px;
+    min-height: 58px;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    font-weight: 900;
+  }
+
+  .roster-button.active {
+    border-color: var(--blue);
+    background: #eff6ff;
+    color: #1d4ed8;
+  }
+
+  .progress-stack {
+    display: grid;
+    gap: 9px;
+  }
+
+  .progress-row-game {
+    display: grid;
+    grid-template-columns: 84px minmax(0, 1fr) 38px;
+    gap: 9px;
+    align-items: center;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 780;
+  }
+
+  .mission-card {
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 8px;
+    padding: 10px;
+    display: grid;
+    gap: 8px;
+  }
+
+  .mission-card b { font-size: 13px; }
+  .mission-card span { color: var(--muted); font-size: 12px; line-height: 1.35; }
+
+  .reel-stage {
+    display: grid;
+    grid-template-columns: 132px minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+  }
+
+  .reel-phone {
+    position: relative;
+    aspect-ratio: 9 / 16;
+    border-radius: 22px;
+    padding: 9px;
+    background: #080b12;
+    box-shadow: 0 22px 46px rgba(15, 23, 42, 0.24);
+    border: 1px solid #1f2937;
+    overflow: hidden;
+  }
+
+  .reel-screen {
+    position: relative;
+    height: 100%;
+    border-radius: 16px;
+    overflow: hidden;
+    color: #fff;
+    background:
+      radial-gradient(circle at 24% 18%, rgba(255, 255, 255, 0.22), transparent 18%),
+      linear-gradient(160deg, var(--reel-color, #265df2), #0f172a 68%);
+  }
+
+  .reel-screen::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(180deg, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.64)),
+      repeating-linear-gradient(0deg, transparent, transparent 18px, rgba(255, 255, 255, 0.045) 18px, rgba(255, 255, 255, 0.045) 19px);
+  }
+
+  .reel-character {
+    position: absolute;
+    left: 50%;
+    top: 22%;
+    width: 72px;
+    height: 102px;
+    transform: translateX(-50%);
+    filter: drop-shadow(0 16px 20px rgba(0, 0, 0, 0.35));
+  }
+
+  .reel-character .agent-head {
+    width: 58px;
+    height: 58px;
+    font-size: 17px;
+    border: 4px solid rgba(255, 255, 255, 0.92);
+  }
+
+  .reel-character .agent-body {
+    width: 64px;
+    height: 46px;
+  }
+
+  .reel-caption {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    bottom: 14px;
+    z-index: 2;
+  }
+
+  .reel-caption b {
+    display: block;
+    font-size: 15px;
+    margin-bottom: 5px;
+  }
+
+  .reel-caption span {
+    display: block;
+    font-size: 12px;
+    line-height: 1.32;
+    color: rgba(255, 255, 255, 0.86);
+  }
+
+  .reel-side-icons {
+    position: absolute;
+    right: 8px;
+    bottom: 78px;
+    z-index: 3;
+    display: grid;
+    gap: 8px;
+  }
+
+  .reel-side-icons button {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  .reel-meta {
+    display: grid;
+    gap: 9px;
+  }
+
+  .reel-meta h4 {
+    margin: 0;
+    font-size: 15px;
+  }
+
+  .reel-meta p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .reel-controls {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 960px) {
+    .navlinks { display: none; }
+    .hero { grid-template-columns: 1fr; }
+    .hero-copy { padding-top: 24px; }
+    .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .repo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .quest-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .legend-hero { grid-template-columns: 1fr; }
+    .shard-counter { text-align: left; }
+    .game-top { grid-template-columns: 1fr; }
+    .game-score { min-width: 0; }
+    .game-layout { grid-template-columns: 1fr; }
+    .office-map { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .commerce { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 620px) {
+    .shell { padding: 0 15px; }
+    .nav { min-height: 62px; }
+    .brand span { display: none; }
+    .nav-actions .light { display: none; }
+    h1 { font-size: 42px; }
+    .progress-row { grid-template-columns: 1fr; }
+    .grid { grid-template-columns: 1fr; }
+    .repo-grid { grid-template-columns: 1fr; }
+    .quest-grid { grid-template-columns: 1fr; }
+    .office-map { grid-template-columns: 1fr; }
+    .office-room.meeting { grid-column: span 1; }
+    .game-score { grid-template-columns: 1fr; }
+    .offer { grid-template-columns: 42px minmax(0, 1fr); }
+    .price { grid-column: 2; }
+    .section-head { display: block; }
+  }
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell nav">
+      <div class="brand">
+        <div class="mark">F2</div>
+        <div>
+          <strong>FEDGE 2.O</strong>
+          <span>Business command hub</span>
+        </div>
+      </div>
+      <nav class="navlinks" aria-label="Main navigation">
+        <a href="#hq-game">HQ Game</a>
+        <a href="#apps">Apps</a>
+        <a href="#repos">Repos</a>
+        <a href="#legends">Legends</a>
+        <a href="#plans">Access</a>
+        <a href="#logs">Live ops</a>
+      </nav>
+      <div class="nav-actions">
+        <button class="btn light" onclick="openHub('core')">View ops</button>
+        <a class="btn dark" href="#plans">Private access</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="hero">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="dot"></span> 8 agents online</div>
+        <h1>FEDGE 2.O</h1>
+        <p class="lead">A cleaner personal hub for agents, games, automations, and web3 experiments. Built to feel closer to a Whop-style command page while keeping everything free and private for now.</p>
+        <div class="hero-actions">
+          <a class="btn blue" href="#plans">Enter hub</a>
+          <button class="btn light" onclick="openHub('whatsapp')">Open agent log</button>
+        </div>
+        <div class="creator-strip">
+          <div class="chip">88 skills loaded</div>
+          <div class="chip">6 repos synced</div>
+          <div class="chip">3 active games</div>
+          <div class="chip">Solana layer live</div>
+        </div>
+      </div>
+
+      <aside class="showcase" aria-label="Business overview">
+        <div class="showcase-head">
+          <div class="mini">
+            <span>Creator dashboard</span>
+            <span id="uptime">00:00:00</span>
+          </div>
+          <h2>Command Center</h2>
+          <p>Package the FEDGE ecosystem into offers, memberships, and live operational access.</p>
+        </div>
+        <div class="progress-row">
+          <div class="metric"><b>8</b><span>Agents</span></div>
+          <div class="metric"><b>100%</b><span>Core health</span></div>
+          <div class="metric"><b>$1.2k</b><span>USDC demo</span></div>
+        </div>
+        <div class="offer-list">
+          <div class="offer">
+            <div class="offer-badge">WA</div>
+            <div>
+              <h3>WhatsApp Bot</h3>
+              <p>Role-based assistant access with skills and Suno prompts.</p>
+            </div>
+            <div class="price">Live</div>
+          </div>
+          <div class="offer">
+            <div class="offer-badge" style="background:var(--amber)">TF</div>
+            <div>
+              <h3>Trust Fund Game</h3>
+              <p>Expo build, reward loops, and game membership path.</p>
+            </div>
+            <div class="price">68%</div>
+          </div>
+          <div class="offer">
+            <div class="offer-badge" style="background:var(--cyan)">EC</div>
+            <div>
+              <h3>Eclatcrypto</h3>
+              <p>Solana and DeFi layer for the FEDGE stack.</p>
+            </div>
+            <div class="price">Synced</div>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="section" id="hq-game">
+      <div class="hq-game deluxe">
+        <div class="game-top deluxe">
+          <div>
+            <div class="game-kicker"><span class="dot"></span> Private playable command sim</div>
+            <h2>FEDGE HQ Game</h2>
+            <p>Run the FEDGE building like a live studio. Every agent owns an office, joins meetings, reports progress, and pushes your projects forward through quests.</p>
+            <div class="game-actions">
+              <button class="btn blue" onclick="callMeeting()">Run standup</button>
+              <button class="btn light" onclick="completeHQQuest('Daily build sprint')">Complete sprint</button>
+              <button class="btn light" onclick="resetMeeting()">Send agents home</button>
+            </div>
+          </div>
+          <div class="game-score">
+            <div class="score-tile"><b id="hq-focus">72</b><span>Focus</span></div>
+            <div class="score-tile"><b id="hq-shards">347</b><span>Shards</span></div>
+            <div class="score-tile"><b id="hq-builds">13</b><span>Builds</span></div>
+          </div>
+        </div>
+
+        <div class="game-layout">
+          <div class="office-map deluxe" id="office-map" aria-label="FEDGE office map">
+            <div class="office-room deluxe" data-agent="whatsapp" onclick="selectOfficeAgent('whatsapp')">
+              <div class="room-label"><h3>WhatsApp Bot</h3><span>Comms</span></div>
+              <div class="room-chip">88 skills</div>
+              <div class="agent-person deluxe" id="person-whatsapp" data-seat="0"><div class="agent-head" style="background:var(--green)">WA</div><div class="agent-body"></div></div>
+              <div class="desk"></div>
+            </div>
+            <div class="office-room deluxe" data-agent="core" onclick="selectOfficeAgent('core')">
+              <div class="room-label"><h3>FEDGE Core</h3><span>Ops</span></div>
+              <div class="room-chip">100% health</div>
+              <div class="agent-person deluxe" id="person-core" data-seat="1"><div class="agent-head">F2</div><div class="agent-body"></div></div>
+              <div class="desk"></div>
+            </div>
+            <div class="office-room meeting boardroom" onclick="callMeeting()">
+              <div class="room-label"><h3>Meeting Room</h3><span id="meeting-state">Standby</span></div>
+              <div class="meeting-ring"></div>
+              <div class="speech-bubble" id="speaker-bubble">Select an agent or run the first standup.</div>
+              <div class="meeting-table deluxe"></div>
+              <div class="boardroom-screen"><b id="boardroom-title">Today agenda</b><span id="boardroom-copy">Review games, repos, creative drops, and chain work.</span></div>
+              <button class="btn blue" onclick="event.stopPropagation();callMeeting()">Start meeting</button>
+            </div>
+            <div class="office-room deluxe" data-agent="trustfund" onclick="selectOfficeAgent('trustfund')">
+              <div class="room-label"><h3>Trust Fund</h3><span>Game</span></div>
+              <div class="room-chip">68% build</div>
+              <div class="agent-person deluxe" id="person-trustfund" data-seat="2"><div class="agent-head" style="background:var(--amber)">TF</div><div class="agent-body"></div></div>
+              <div class="desk"></div>
+            </div>
+            <div class="office-room deluxe" data-agent="credit" onclick="selectOfficeAgent('credit')">
+              <div class="room-label"><h3>Credit Game</h3><span>Game</span></div>
+              <div class="room-chip">root branch</div>
+              <div class="agent-person deluxe" id="person-credit" data-seat="3"><div class="agent-head" style="background:#7c3aed">CG</div><div class="agent-body"></div></div>
+              <div class="desk"></div>
+            </div>
+            <div class="office-room deluxe" data-agent="lockin" onclick="selectOfficeAgent('lockin')">
+              <div class="room-label"><h3>Lock In</h3><span>Focus</span></div>
+              <div class="room-chip">discipline loop</div>
+              <div class="agent-person deluxe" id="person-lockin" data-seat="4"><div class="agent-head" style="background:#0f766e">LI</div><div class="agent-body"></div></div>
+              <div class="desk"></div>
+            </div>
+            <div class="office-room deluxe" data-agent="trade" onclick="selectOfficeAgent('trade')">
+              <div class="room-label"><h3>TradeStreet</h3><span>Markets</span></div>
+              <div class="room-chip">45% build</div>
+              <div class="agent-person deluxe" id="person-trade" data-seat="5"><div class="agent-head" style="background:#2563eb">TS</div><div class="agent-body"></div></div>
+              <div class="desk"></div>
+            </div>
+            <div class="office-room deluxe" data-agent="melao" onclick="selectOfficeAgent('melao')">
+              <div class="room-label"><h3>Melao Studio</h3><span>Music</span></div>
+              <div class="room-chip">47 tracks</div>
+              <div class="agent-person deluxe" id="person-melao" data-seat="6"><div class="agent-head" style="background:#ea580c">MS</div><div class="agent-body"></div></div>
+              <div class="desk"></div>
+            </div>
+            <div class="office-room deluxe" data-agent="mhealth" onclick="selectOfficeAgent('mhealth')">
+              <div class="room-label"><h3>Mental Health</h3><span>Care</span></div>
+              <div class="room-chip">30% loop</div>
+              <div class="agent-person deluxe" id="person-mhealth" data-seat="7"><div class="agent-head" style="background:var(--pink)">MH</div><div class="agent-body"></div></div>
+              <div class="desk"></div>
+            </div>
+            <div class="office-room deluxe" data-agent="ecrypto" onclick="selectOfficeAgent('ecrypto')">
+              <div class="room-label"><h3>Eclatcrypto</h3><span>Chain</span></div>
+              <div class="room-chip">Solana sync</div>
+              <div class="agent-person deluxe" id="person-ecrypto" data-seat="8"><div class="agent-head" style="background:#059669">EC</div><div class="agent-body"></div></div>
+              <div class="desk"></div>
+            </div>
+          </div>
+
+          <aside class="game-side deluxe">
+            <div class="game-panel">
+              <h3>Selected agent</h3>
+              <div class="selected-agent">
+                <div class="agent-head" id="selected-avatar">F2</div>
+                <div><b id="selected-name">FEDGE Core</b><span id="selected-role">Operations and memory system</span></div>
+              </div>
+              <button class="btn dark" style="width:100%" onclick="openSelectedLog()">Open office log</button>
+            </div>
+
+            <div class="game-panel">
+              <h3>Agent roster</h3>
+              <div class="agent-roster" id="agent-roster"></div>
+            </div>
+
+            <div class="game-panel">
+              <h3>Project progress</h3>
+              <div class="progress-stack" id="project-progress"></div>
+            </div>
+
+            <div class="game-panel">
+              <h3>HQ Reels</h3>
+              <div class="reel-stage">
+                <div class="reel-phone">
+                  <div class="reel-screen" id="reel-screen">
+                    <div class="reel-character">
+                      <div class="agent-head" id="reel-avatar">F2</div>
+                      <div class="agent-body"></div>
+                    </div>
+                    <div class="reel-side-icons">
+                      <button onclick="boostReel()" title="Boost reel">+</button>
+                      <button onclick="nextReel()" title="Next reel">></button>
+                    </div>
+                    <div class="reel-caption">
+                      <b id="reel-title">FEDGE Core</b>
+                      <span id="reel-caption">Memory is clean. The next move is turning scattered projects into one rhythm.</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="reel-meta">
+                  <h4 id="reel-hook">Today’s progress clip</h4>
+                  <p id="reel-detail">Short-form agent updates for quick daily check-ins.</p>
+                  <div class="reel-controls">
+                    <button class="btn light" onclick="prevReel()">Prev</button>
+                    <button class="btn blue" onclick="nextReel()">Next</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="game-panel">
+              <h3>Mission deck</h3>
+              <div class="quest-list">
+                <button class="quest-button" onclick="completeHQQuest('Ship playable loop')">Ship playable loop</button>
+                <button class="quest-button" onclick="completeHQQuest('Sync repo roadmap')">Sync repo roadmap</button>
+                <button class="quest-button" onclick="completeHQQuest('Draft next public drop')">Draft next public drop</button>
+                <button class="quest-button" onclick="completeHQQuest('Polish HQ meeting sim')">Polish HQ meeting sim</button>
+              </div>
+            </div>
+
+            <div class="game-panel">
+              <h3>Meeting notes</h3>
+              <div class="meeting-log" id="meeting-log"></div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="apps">
+      <div class="section-head">
+        <div>
+          <h2>Products and agents</h2>
+          <p>Each tile is a private workspace for your agents, apps, games, and experiments.</p>
+        </div>
+        <button class="btn light" onclick="openHub('agent')">Open nexus</button>
+      </div>
+
+      <div class="grid">
+        <article class="app-card" onclick="openHub('whatsapp')">
+          <div class="card-top"><div class="icon" style="background:var(--green)">WA</div><span class="status"><span class="dot"></span> Live</span></div>
+          <div><h3>WhatsApp Bot</h3><p>Baileys, pm2, skills, roles, and user command access.</p></div>
+          <div class="mini-stats"><div class="mini-stat"><b>88</b><span>skills</span></div><div class="mini-stat"><b>2,341</b><span>msgs</span></div></div>
+        </article>
+
+        <article class="app-card" onclick="openHub('core')">
+          <div class="card-top"><div class="icon">F2</div><span class="status"><span class="dot"></span> Live</span></div>
+          <div><h3>FEDGE Core</h3><p>OpenClaw runtime, WAL protocol, and identity files.</p></div>
+          <div class="mini-stats"><div class="mini-stat"><b>100%</b><span>health</span></div><div class="mini-stat"><b>6</b><span>repos</span></div></div>
+        </article>
+
+        <article class="app-card" onclick="openHub('trustfund')">
+          <div class="card-top"><div class="icon" style="background:var(--amber)">TF</div><span class="status" style="color:#92400e;background:#fffbeb;border-color:#fde68a"><span class="dot"></span> Build</span></div>
+          <div><h3>Trust Fund Game</h3><p>Expo game build with investment loops and FDG rewards.</p></div>
+          <div class="mini-stats"><div class="mini-stat"><b>68%</b><span>build</span></div><div class="mini-stat"><b>1</b><span>season</span></div></div>
+        </article>
+
+        <article class="app-card" onclick="openHub('agent')">
+          <div class="card-top"><div class="icon" style="background:var(--cyan)">NX</div><span class="status"><span class="dot"></span> Live</span></div>
+          <div><h3>Agent Nexus</h3><p>SOUL, MEMORY, AGENTS, and USER files loaded into the hub.</p></div>
+          <div class="mini-stats"><div class="mini-stat"><b>4</b><span>files</span></div><div class="mini-stat"><b>On</b><span>github</span></div></div>
+        </article>
+
+        <article class="app-card" onclick="openHub('trade')">
+          <div class="card-top"><div class="icon" style="background:#2563eb">TS</div><span class="status" style="color:#1d4ed8;background:#eff6ff;border-color:#bfdbfe"><span class="dot"></span> Dev</span></div>
+          <div><h3>TradeStreet</h3><p>Trading dashboard, TypeScript build, and market-data layer.</p></div>
+          <div class="mini-stats"><div class="mini-stat"><b>45%</b><span>build</span></div><div class="mini-stat"><b>RN</b><span>stack</span></div></div>
+        </article>
+
+        <article class="app-card" onclick="openHub('melao')">
+          <div class="card-top"><div class="icon" style="background:#ea580c">MS</div><span class="status"><span class="dot"></span> Live</span></div>
+          <div><h3>Melao Studio</h3><p>Studio-only access for tracks, prompts, and creative output.</p></div>
+          <div class="mini-stats"><div class="mini-stat"><b>47</b><span>tracks</span></div><div class="mini-stat"><b>WO</b><span>access</span></div></div>
+        </article>
+
+        <article class="app-card" onclick="openHub('mhealth')">
+          <div class="card-top"><div class="icon" style="background:var(--pink)">MH</div><span class="status" style="color:#a16207;background:#fefce8;border-color:#fde68a"><span class="dot"></span> WIP</span></div>
+          <div><h3>Mental Health Game</h3><p>Alberto co-build with behavioral framework and core loop.</p></div>
+          <div class="mini-stats"><div class="mini-stat"><b>30%</b><span>loop</span></div><div class="mini-stat"><b>NYC</b><span>partner</span></div></div>
+        </article>
+
+        <article class="app-card" onclick="openHub('ecrypto')">
+          <div class="card-top"><div class="icon" style="background:#059669">EC</div><span class="status"><span class="dot"></span> Sync</span></div>
+          <div><h3>Eclatcrypto</h3><p>Solana, DeFi, and generational wealth layer for FEDGE.</p></div>
+          <div class="mini-stats"><div class="mini-stat"><b>SOL</b><span>chain</span></div><div class="mini-stat"><b>FDG</b><span>token</span></div></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="repos">
+      <div class="section-head">
+        <div>
+          <h2>GitHub repos</h2>
+          <p>Connected projects from github.com/cryptofedge, grouped into the same private hub.</p>
+        </div>
+        <a class="btn light" href="https://github.com/cryptofedge?tab=repositories" target="_blank" rel="noreferrer">Open GitHub</a>
+      </div>
+
+      <div class="repo-grid">
+        <a class="repo-card" href="https://github.com/cryptofedge/FEDGE-2.O" target="_blank" rel="noreferrer">
+          <div>
+            <h3>FEDGE-2.O</h3>
+            <p>Core private command system, agent memory, and workspace brain.</p>
+          </div>
+          <div class="repo-meta"><span class="repo-pill private">Private</span><span class="repo-pill">main</span><span class="repo-pill">23.9 MB</span></div>
+        </a>
+        <a class="repo-card" href="https://github.com/cryptofedge/fedge2-trust-fund-game" target="_blank" rel="noreferrer">
+          <div>
+            <h3>fedge2-trust-fund-game</h3>
+            <p>Expo game build with generational wealth loops and reward mechanics.</p>
+          </div>
+          <div class="repo-meta"><span class="repo-pill">Public</span><span class="repo-pill">main</span><span class="repo-pill">Game</span></div>
+        </a>
+        <a class="repo-card" href="https://github.com/cryptofedge/fedge-2-credit-game" target="_blank" rel="noreferrer">
+          <div>
+            <h3>fedge-2-credit-game</h3>
+            <p>Credit education game track for the FEDGE ecosystem.</p>
+          </div>
+          <div class="repo-meta"><span class="repo-pill">Public</span><span class="repo-pill">root</span><span class="repo-pill">Game</span></div>
+        </a>
+        <a class="repo-card" href="https://github.com/cryptofedge/generational-wealth-game" target="_blank" rel="noreferrer">
+          <div>
+            <h3>generational-wealth-game</h3>
+            <p>Personal finance and wealth-building game concept.</p>
+          </div>
+          <div class="repo-meta"><span class="repo-pill">Public</span><span class="repo-pill">main</span><span class="repo-pill">Game</span></div>
+        </a>
+        <a class="repo-card" href="https://github.com/cryptofedge/lock-in-game" target="_blank" rel="noreferrer">
+          <div>
+            <h3>lock-in-game</h3>
+            <p>Focus, discipline, and progression game for staying locked in.</p>
+          </div>
+          <div class="repo-meta"><span class="repo-pill">Public</span><span class="repo-pill">main</span><span class="repo-pill">Game</span></div>
+        </a>
+        <a class="repo-card" href="https://github.com/cryptofedge/Hustle-Politics-" target="_blank" rel="noreferrer">
+          <div>
+            <h3>Hustle-Politics-</h3>
+            <p>World, politics, and hustle-themed project space.</p>
+          </div>
+          <div class="repo-meta"><span class="repo-pill">Public</span><span class="repo-pill">main</span><span class="repo-pill">Project</span></div>
+        </a>
+        <a class="repo-card" href="https://github.com/cryptofedge/world-stage" target="_blank" rel="noreferrer">
+          <div>
+            <h3>world-stage</h3>
+            <p>Stage, storytelling, and world-building surface for FEDGE ideas.</p>
+          </div>
+          <div class="repo-meta"><span class="repo-pill">Public</span><span class="repo-pill">main</span><span class="repo-pill">Creative</span></div>
+        </a>
+        <a class="repo-card" href="https://github.com/cryptofedge/tradestreet-fedge" target="_blank" rel="noreferrer">
+          <div>
+            <h3>tradestreet-fedge</h3>
+            <p>Trading dashboard and market-data app track.</p>
+          </div>
+          <div class="repo-meta"><span class="repo-pill">Public</span><span class="repo-pill">main</span><span class="repo-pill">Trading</span></div>
+        </a>
+        <a class="repo-card" href="https://github.com/cryptofedge/Eclatcrypto" target="_blank" rel="noreferrer">
+          <div>
+            <h3>Eclatcrypto</h3>
+            <p>Solana, web3, DeFi, and token-list foundation.</p>
+          </div>
+          <div class="repo-meta"><span class="repo-pill">Public</span><span class="repo-pill">main</span><span class="repo-pill">Web3</span></div>
+        </a>
+        <a class="repo-card" href="https://github.com/cryptofedge/token-list" target="_blank" rel="noreferrer">
+          <div>
+            <h3>token-list</h3>
+            <p>Large token-list repo connected to the crypto layer.</p>
+          </div>
+          <div class="repo-meta"><span class="repo-pill">Public</span><span class="repo-pill">main</span><span class="repo-pill">Tokens</span></div>
+        </a>
+        <a class="repo-card" href="https://github.com/cryptofedge/melaos-studio" target="_blank" rel="noreferrer">
+          <div>
+            <h3>melaos-studio</h3>
+            <p>Studio workspace for Melao, prompts, tracks, and creative builds.</p>
+          </div>
+          <div class="repo-meta"><span class="repo-pill">Public</span><span class="repo-pill">main</span><span class="repo-pill">Studio</span></div>
+        </a>
+        <a class="repo-card" href="https://github.com/cryptofedge/mando-el-pelado" target="_blank" rel="noreferrer">
+          <div>
+            <h3>mando-el-pelado</h3>
+            <p>Small public project space for future expansion.</p>
+          </div>
+          <div class="repo-meta"><span class="repo-pill">Public</span><span class="repo-pill">main</span><span class="repo-pill">Project</span></div>
+        </a>
+        <a class="repo-card" href="https://github.com/cryptofedge/FEDGE-License" target="_blank" rel="noreferrer">
+          <div>
+            <h3>FEDGE-License</h3>
+            <p>Private license and ownership materials for the FEDGE system.</p>
+          </div>
+          <div class="repo-meta"><span class="repo-pill private">Private</span><span class="repo-pill">main</span><span class="repo-pill">Legal</span></div>
+        </a>
+      </div>
+    </section>
+
+    <section class="section" id="legends">
+      <div class="section-head">
+        <div>
+          <h2>FEDGE Legends</h2>
+          <p>A private gamified roadmap for quests, repo work, agent actions, and build milestones.</p>
+        </div>
+        <button class="btn light" onclick="enterArea('legends')">Open progress</button>
+      </div>
+
+      <div class="legend-panel">
+        <div class="legend-hero">
+          <div>
+            <h3>Build the legacy map</h3>
+            <p>Complete tasks across community, knowledge, creation, collaboration, and decentralization tracks. Earn shards as progress markers now, then turn them into badges, unlocks, or rewards later.</p>
+          </div>
+          <div class="shard-counter">
+            <b>347</b>
+            <span>PRIVATE SHARDS</span>
+          </div>
+        </div>
+
+        <div class="quest-grid">
+          <article class="quest-card">
+            <div class="repo-pill">Community</div>
+            <div>
+              <h4>Grow the circle</h4>
+              <p>Organize updates, drops, invites, and the first public-facing FEDGE story.</p>
+            </div>
+            <div class="quest-progress">
+              <span><b>Progress</b><b>62%</b></span>
+              <div class="bar-track"><div class="bar-fill" style="width:62%;background:var(--green)"></div></div>
+            </div>
+          </article>
+
+          <article class="quest-card">
+            <div class="repo-pill">Knowledge</div>
+            <div>
+              <h4>Train the memory</h4>
+              <p>Clean notes, docs, repo context, and agent memory into reliable source material.</p>
+            </div>
+            <div class="quest-progress">
+              <span><b>Progress</b><b>74%</b></span>
+              <div class="bar-track"><div class="bar-fill" style="width:74%;background:var(--blue)"></div></div>
+            </div>
+          </article>
+
+          <article class="quest-card">
+            <div class="repo-pill">Creation</div>
+            <div>
+              <h4>Ship the games</h4>
+              <p>Move Trust Fund, Credit Game, Lock In, and World Stage into playable loops.</p>
+            </div>
+            <div class="quest-progress">
+              <span><b>Progress</b><b>46%</b></span>
+              <div class="bar-track"><div class="bar-fill" style="width:46%;background:var(--amber)"></div></div>
+            </div>
+          </article>
+
+          <article class="quest-card">
+            <div class="repo-pill">Collaboration</div>
+            <div>
+              <h4>Activate partners</h4>
+              <p>Coordinate Melao Studio, Alberto’s framework, TradeStreet, and future builders.</p>
+            </div>
+            <div class="quest-progress">
+              <span><b>Progress</b><b>39%</b></span>
+              <div class="bar-track"><div class="bar-fill" style="width:39%;background:var(--pink)"></div></div>
+            </div>
+          </article>
+
+          <article class="quest-card">
+            <div class="repo-pill">Decentralize</div>
+            <div>
+              <h4>Fortify the chain</h4>
+              <p>Connect Eclatcrypto, token-list, FDG rewards, and blockchain docs into one lane.</p>
+            </div>
+            <div class="quest-progress">
+              <span><b>Progress</b><b>58%</b></span>
+              <div class="bar-track"><div class="bar-fill" style="width:58%;background:var(--cyan)"></div></div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="plans">
+      <div class="section-head">
+        <div>
+          <h2>Private access</h2>
+          <p>Free personal access blocks for organizing the hub before it becomes public.</p>
+        </div>
+      </div>
+      <div class="commerce">
+        <article class="plan">
+          <h3>Community</h3>
+          <p>Entry access for updates, game drops, and public FEDGE experiments.</p>
+          <div class="amount">Free</div>
+          <small>personal access</small>
+          <ul class="features">
+            <li>Announcements and drops</li>
+            <li>Game progress feed</li>
+            <li>Basic community access</li>
+          </ul>
+          <button class="btn light" style="width:100%" onclick="enterArea('apps')">Open</button>
+        </article>
+        <article class="plan featured">
+          <h3>Command</h3>
+          <p>Best fit for users who want bot access, logs, and active products.</p>
+          <div class="amount">Free</div>
+          <small>private command access</small>
+          <ul class="features">
+            <li>WhatsApp bot commands</li>
+            <li>Agent dashboard access</li>
+            <li>Private build updates</li>
+          </ul>
+          <button class="btn blue" style="width:100%" onclick="enterArea('command')">Enter command</button>
+        </article>
+        <article class="plan">
+          <h3>Founder</h3>
+          <p>High-touch access for collaborators, creators, and core builders.</p>
+          <div class="amount">Free</div>
+          <small>founder workspace</small>
+          <ul class="features">
+            <li>Priority agent requests</li>
+            <li>Build reviews</li>
+            <li>Partner product access</li>
+          </ul>
+          <button class="btn dark" style="width:100%" onclick="enterArea('workspace')">Open workspace</button>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="shell">FEDGE 2.O - Generational Wealth Platform - github.com/cryptofedge - Miami, FL</div>
+  </footer>
+
+  <div class="modal" id="modal" onclick="closeModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <div class="modal-head">
+        <div>
+          <h2 id="modal-title">Agent log</h2>
+          <span id="modal-subtitle">Live operational output</span>
+        </div>
+        <button class="btn light" onclick="hideModal()">Close</button>
+      </div>
+      <div class="modal-body" id="logs">
+        <div class="log" id="modal-log"></div>
+        <div class="command">
+          <input id="modal-input" placeholder="enter command..." onkeydown="handleCmd(event)">
+          <button class="btn dark" onclick="submitCmd()">Run</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const state = {
+    sec: 0,
+    currentAgent: "core",
+    logs: {
+      whatsapp: ["BOOT fedge-bot.js initializing", "pm2 process started", "AUTH session restored", "SKILLS 88 of 88 loaded", "ROLES Fellito admin", "BOT listening for messages"],
+      core: ["BOOT FEDGE 2.O core starting", "WAL protocol ready", "OpenClaw proactive-agent loaded", "SOUL loaded", "MEMORY loaded", "GITHUB repos synced", "CORE all systems operational"],
+      trustfund: ["EXPO project initializing", "Account fedge2.o verified", "Bundling React Native assets", "Build 68 percent complete", "FDG token rewards enabled"],
+      agent: ["NEXUS identity pipeline starting", "SOUL loaded", "MEMORY loaded", "AGENTS loaded", "USER Fellito loaded", "GitHub connected"],
+      trade: ["TRADESTREET initializing", "TypeScript compiler ready", "React Native bundler starting", "Market endpoint connected", "Dashboard rendering"],
+      melao: ["STUDIO initializing", "Melao access verified", "Suno prompt engine ready", "47 tracks generated", "Awaiting new prompt"],
+      mhealth: ["Mental Health Game initializing", "Alberto onboarded", "Concept locked", "Behavioral framework active", "Core loop 30 percent complete"],
+      ecrypto: ["ECLATCRYPTO initializing", "Solana RPC connected", "DeFi protocols synced", "FDG token contract deployed", "Block height synced"],
+      credit: ["CREDIT GAME initializing", "Credit education loop loaded", "Scenario cards queued", "Score model ready", "Branch root synced"],
+      lockin: ["LOCK IN GAME initializing", "Focus streak engine ready", "Daily quest loop active", "Discipline rewards queued", "Progress board synced"]
+    }
+  };
+
+  const hqAgents = {
+    whatsapp: { name: "WhatsApp Bot", role: "Comms, commands, and user access", avatar: "WA", color: "var(--green)", line: "I can route updates, capture commands, and keep the whole squad reachable." },
+    core: { name: "FEDGE Core", role: "Operations and memory system", avatar: "F2", color: "var(--blue)", line: "Memory is clean. The next move is turning scattered projects into one operating rhythm." },
+    trustfund: { name: "Trust Fund Game", role: "Wealth loop and Expo build", avatar: "TF", color: "var(--amber)", line: "The money loop needs three polished actions: earn, invest, and protect." },
+    credit: { name: "Credit Game", role: "Credit education scenarios", avatar: "CG", color: "#7c3aed", line: "I want choices that teach credit without feeling like homework." },
+    lockin: { name: "Lock In Game", role: "Focus streaks and discipline loop", avatar: "LI", color: "#0f766e", line: "Give me daily streaks, visible wins, and no wasted motion." },
+    trade: { name: "TradeStreet", role: "Market dashboard and trading tools", avatar: "TS", color: "#2563eb", line: "Market cards are ready. We need signal, risk, and action in one clean screen." },
+    melao: { name: "Melao Studio", role: "Music prompts and creative drops", avatar: "MS", color: "#ea580c", line: "Creative drops need a queue: prompt, track, cover, release." },
+    mhealth: { name: "Mental Health Game", role: "Care loop and behavioral framework", avatar: "MH", color: "var(--pink)", line: "The loop should feel safe, useful, and human before it feels gamey." },
+    ecrypto: { name: "Eclatcrypto", role: "Solana, token, and DeFi layer", avatar: "EC", color: "#059669", line: "Chain lane is synced. Rewards should stay simple until the core game is fun." }
+  };
+
+  const hqProjects = [
+    { key: "trustfund", label: "Trust Fund", value: 68, color: "var(--amber)" },
+    { key: "credit", label: "Credit Game", value: 42, color: "#7c3aed" },
+    { key: "lockin", label: "Lock In", value: 54, color: "#0f766e" },
+    { key: "trade", label: "TradeStreet", value: 45, color: "#2563eb" },
+    { key: "melao", label: "Melao Studio", value: 76, color: "#ea580c" },
+    { key: "ecrypto", label: "Eclatcrypto", value: 58, color: "#059669" }
+  ];
+
+  const hqReels = [
+    { agent: "core", hook: "The command brain is online", detail: "FEDGE Core turns scattered repos, notes, and agents into one operating system." },
+    { agent: "trustfund", hook: "Wealth loop needs to feel playable", detail: "Trust Fund is polishing earn, invest, protect, and reward decisions." },
+    { agent: "credit", hook: "Credit lessons without boring homework", detail: "Credit Game turns real-life financial choices into quick scenarios." },
+    { agent: "lockin", hook: "Daily streaks beat vague motivation", detail: "Lock In tracks focus wins and rewards consistency." },
+    { agent: "trade", hook: "Signals should be simple", detail: "TradeStreet compresses market context into clear actions." },
+    { agent: "melao", hook: "Creative drops need a pipeline", detail: "Melao Studio moves from prompt to track to cover to release." },
+    { agent: "mhealth", hook: "Care loop first, game loop second", detail: "Mental Health Game keeps safety and usefulness at the center." },
+    { agent: "ecrypto", hook: "Rewards need clean rails", detail: "Eclatcrypto keeps token, Solana, and DeFi work aligned." },
+    { agent: "whatsapp", hook: "The whole HQ needs a hotline", detail: "WhatsApp Bot keeps updates and commands close to the user." }
+  ];
+
+  const hqState = {
+    selected: "core",
+    focus: 72,
+    shards: 347,
+    builds: 13,
+    meetingActive: false,
+    meetingRound: 0,
+    reelIndex: 0
+  };
+
+  setInterval(() => {
+    state.sec += 1;
+    const h = String(Math.floor(state.sec / 3600)).padStart(2, "0");
+    const m = String(Math.floor((state.sec % 3600) / 60)).padStart(2, "0");
+    const s = String(state.sec % 60).padStart(2, "0");
+    document.getElementById("uptime").textContent = `${h}:${m}:${s}`;
+  }, 1000);
+
+  function stamp() {
+    return new Date().toISOString().slice(11, 19);
+  }
+
+  function appendLog(text, tone = "normal") {
+    const row = document.createElement("div");
+    const time = document.createElement("span");
+    time.style.color = "#64748b";
+    time.textContent = `[${stamp()}] `;
+    row.appendChild(time);
+    const body = document.createElement("span");
+    body.style.color = tone === "cmd" ? "#67e8f9" : "#dbeafe";
+    body.textContent = text;
+    row.appendChild(body);
+    const log = document.getElementById("modal-log");
+    log.appendChild(row);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function appendMeeting(text, tone = "normal") {
+    const log = document.getElementById("meeting-log");
+    if (!log) return;
+    const row = document.createElement("div");
+    const time = document.createElement("span");
+    time.style.color = "#64748b";
+    time.textContent = `[${stamp()}] `;
+    row.appendChild(time);
+    const body = document.createElement("span");
+    body.style.color = tone === "win" ? "#86efac" : "#dbeafe";
+    body.textContent = text;
+    row.appendChild(body);
+    log.appendChild(row);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function renderHQ() {
+    const agent = hqAgents[hqState.selected];
+    if (!agent) return;
+
+    document.querySelectorAll(".office-room[data-agent]").forEach((room) => {
+      room.classList.toggle("selected", room.dataset.agent === hqState.selected);
+    });
+
+    const avatar = document.getElementById("selected-avatar");
+    avatar.textContent = agent.avatar;
+    avatar.style.background = agent.color;
+    document.getElementById("selected-name").textContent = agent.name;
+    document.getElementById("selected-role").textContent = agent.role;
+    document.getElementById("hq-focus").textContent = hqState.focus;
+    document.getElementById("hq-shards").textContent = hqState.shards;
+    document.getElementById("hq-builds").textContent = hqState.builds;
+    document.getElementById("meeting-state").textContent = hqState.meetingActive ? "In session" : "Standby";
+    const bubble = document.getElementById("speaker-bubble");
+    if (bubble) bubble.textContent = agent.line;
+    const boardTitle = document.getElementById("boardroom-title");
+    const boardCopy = document.getElementById("boardroom-copy");
+    if (boardTitle) boardTitle.textContent = `${agent.name} briefing`;
+    if (boardCopy) boardCopy.textContent = agent.role;
+    renderRoster();
+    renderProjectProgress();
+    renderReel();
+  }
+
+  function renderReel() {
+    const reel = hqReels[hqState.reelIndex];
+    if (!reel) return;
+    const agent = hqAgents[reel.agent];
+    const screen = document.getElementById("reel-screen");
+    const avatar = document.getElementById("reel-avatar");
+    if (!screen || !avatar) return;
+
+    screen.style.setProperty("--reel-color", agent.color);
+    avatar.textContent = agent.avatar;
+    avatar.style.background = agent.color;
+    document.getElementById("reel-title").textContent = agent.name;
+    document.getElementById("reel-caption").textContent = agent.line;
+    document.getElementById("reel-hook").textContent = reel.hook;
+    document.getElementById("reel-detail").textContent = reel.detail;
+  }
+
+  function nextReel() {
+    hqState.reelIndex = (hqState.reelIndex + 1) % hqReels.length;
+    hqState.selected = hqReels[hqState.reelIndex].agent;
+    renderHQ();
+    appendMeeting(`Reel queued: ${hqAgents[hqState.selected].name}.`);
+  }
+
+  function prevReel() {
+    hqState.reelIndex = (hqState.reelIndex - 1 + hqReels.length) % hqReels.length;
+    hqState.selected = hqReels[hqState.reelIndex].agent;
+    renderHQ();
+    appendMeeting(`Reel rewound: ${hqAgents[hqState.selected].name}.`);
+  }
+
+  function boostReel() {
+    const reel = hqReels[hqState.reelIndex];
+    const agent = hqAgents[reel.agent];
+    hqState.shards += 9;
+    hqState.focus = Math.min(100, hqState.focus + 2);
+    renderHQ();
+    appendMeeting(`${agent.name} reel boosted. HQ gained 9 shards.`, "win");
+  }
+
+  function renderRoster() {
+    const roster = document.getElementById("agent-roster");
+    if (!roster || roster.children.length) {
+      if (roster) {
+        roster.querySelectorAll(".roster-button").forEach((button) => {
+          button.classList.toggle("active", button.dataset.agent === hqState.selected);
+        });
+      }
+      return;
+    }
+
+    Object.entries(hqAgents).forEach(([id, agent]) => {
+      const button = document.createElement("button");
+      button.className = "roster-button";
+      button.dataset.agent = id;
+      button.textContent = agent.avatar;
+      button.style.color = agent.color;
+      button.onclick = () => selectOfficeAgent(id);
+      roster.appendChild(button);
+    });
+    renderRoster();
+  }
+
+  function renderProjectProgress() {
+    const stack = document.getElementById("project-progress");
+    if (!stack) return;
+    stack.textContent = "";
+    hqProjects.forEach((project) => {
+      const row = document.createElement("div");
+      row.className = "progress-row-game";
+
+      const label = document.createElement("span");
+      label.textContent = project.label;
+
+      const track = document.createElement("div");
+      track.className = "bar-track";
+      const fill = document.createElement("div");
+      fill.className = "bar-fill";
+      fill.style.width = `${project.value}%`;
+      fill.style.background = project.color;
+      track.appendChild(fill);
+
+      const value = document.createElement("b");
+      value.textContent = `${project.value}%`;
+
+      row.append(label, track, value);
+      stack.appendChild(row);
+    });
+  }
+
+  function selectOfficeAgent(agentId) {
+    hqState.selected = agentId;
+    renderHQ();
+    appendMeeting(`${hqAgents[agentId].name}: ${hqAgents[agentId].line}`);
+  }
+
+  function callMeeting() {
+    hqState.meetingActive = true;
+    hqState.meetingRound += 1;
+    document.querySelectorAll(".agent-person").forEach((person) => person.classList.add("in-meeting"));
+    renderHQ();
+    appendMeeting(`Standup ${hqState.meetingRound} started. All agents moved to the boardroom.`, "win");
+    Object.entries(hqAgents).forEach(([id, agent], index) => {
+      setTimeout(() => {
+        hqState.selected = id;
+        renderHQ();
+        appendMeeting(`${agent.name}: ${agent.line}`);
+      }, 240 * (index + 1));
+    });
+  }
+
+  function completeHQQuest(label) {
+    hqState.focus = Math.min(100, hqState.focus + 4);
+    hqState.shards += 21;
+    hqState.builds += 1;
+    const index = hqState.builds % hqProjects.length;
+    hqProjects[index].value = Math.min(100, hqProjects[index].value + 6);
+    renderHQ();
+    appendMeeting(`${label} completed. HQ gained 21 shards.`, "win");
+  }
+
+  function resetMeeting() {
+    hqState.meetingActive = false;
+    document.querySelectorAll(".agent-person").forEach((person) => person.classList.remove("in-meeting"));
+    renderHQ();
+    appendMeeting("Meeting closed. Agents returned to their offices.", "win");
+  }
+
+  function openSelectedLog() {
+    openHub(hqState.selected);
+  }
+
+  function openHub(agent) {
+    state.currentAgent = agent;
+    const modal = document.getElementById("modal");
+    const log = document.getElementById("modal-log");
+    document.getElementById("modal-title").textContent = agent.toUpperCase();
+    document.getElementById("modal-subtitle").textContent = "Live operational output";
+    log.textContent = "";
+    modal.classList.add("open");
+    (state.logs[agent] || []).forEach((line, index) => {
+      setTimeout(() => appendLog(line), index * 90);
+    });
+  }
+
+  function enterArea(area) {
+    if (area === "apps") {
+      document.getElementById("apps").scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+
+    if (area === "command") {
+      openHub("core");
+      appendLog("Private command access granted", "cmd");
+      return;
+    }
+
+    if (area === "workspace") {
+      openHub("agent");
+      appendLog("Founder workspace unlocked", "cmd");
+      return;
+    }
+
+    if (area === "legends") {
+      openHub("trustfund");
+      appendLog("FEDGE Legends progress map opened", "cmd");
+    }
+  }
+
+  function hideModal() {
+    document.getElementById("modal").classList.remove("open");
+  }
+
+  function closeModal(event) {
+    if (event.target.id === "modal") hideModal();
+  }
+
+  function submitCmd() {
+    const input = document.getElementById("modal-input");
+    const value = input.value.trim();
+    if (!value) return;
+    appendLog(`$ ${value}`, "cmd");
+    appendLog(`Command received by ${state.currentAgent}: ${value}`);
+    input.value = "";
+  }
+
+  function handleCmd(event) {
+    if (event.key === "Enter") submitCmd();
+  }
+
+  renderHQ();
+  appendMeeting("HQ online. Select an office or call the first progress meeting.");
+</script>
+</body>
+</html>
