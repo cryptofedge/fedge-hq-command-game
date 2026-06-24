@@ -1381,8 +1381,11 @@
     .section-head { display: block; }
   }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
 </head>
 <body>
+<div id="phaserWrap" style="display:none;position:fixed;inset:0;z-index:9999;background:#090b0f;"></div>
   <header class="topbar">
     <div class="shell nav">
       <div class="brand">
@@ -1611,7 +1614,9 @@
                 <button class="quest-button" onclick="completeHQQuest('Sync repo roadmap')">Sync repo roadmap</button>
                 <button class="quest-button" onclick="completeHQQuest('Draft next public drop')">Draft next public drop</button>
                 <button class="quest-button" onclick="completeHQQuest('Polish HQ meeting sim')">Polish HQ meeting sim</button>
+                <button class="quest-button" onclick="launchSprintChallenge()" style="background:linear-gradient(135deg,#265df2,#0891b2);color:#fff;font-weight:700;border:none;">⚡ Sprint Challenge — Phaser 2D</button>
               </div>
+              <canvas id="three-holo" style="display:block;width:100%;height:140px;border-radius:12px;margin-top:12px;"></canvas>
             </div>
 
             <div class="game-panel">
@@ -2267,6 +2272,143 @@
 
   renderHQ();
   appendMeeting("HQ online. Select an office or call the first progress meeting.");
+
+  // ── THREE.JS HOLOGRAPHIC ORBIT ──────────────────────────
+  (function initHolo(){
+    if(!window.THREE) return;
+    const canvas = document.getElementById('three-holo');
+    if(!canvas) return;
+    const renderer = new THREE.WebGLRenderer({canvas, alpha:true, antialias:true});
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+    const W=canvas.clientWidth||320, H=canvas.clientHeight||140;
+    renderer.setSize(W,H,false);
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(55,W/H,0.1,100);
+    camera.position.set(0,0,12);
+
+    // Central holographic sphere (wireframe)
+    const geo = new THREE.IcosahedronGeometry(2.4,2);
+    const wire = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color:0x265df2,wireframe:true,transparent:true,opacity:0.35}));
+    scene.add(wire);
+    const inner = new THREE.Mesh(new THREE.IcosahedronGeometry(1.6,1), new THREE.MeshBasicMaterial({color:0x0891b2,wireframe:true,transparent:true,opacity:0.22}));
+    scene.add(inner);
+
+    // Orbit ring
+    const ringGeo = new THREE.TorusGeometry(3.8,0.04,8,64);
+    const ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({color:0x265df2,transparent:true,opacity:0.4}));
+    ring.rotation.x = Math.PI/2.4;
+    scene.add(ring);
+
+    // Orbit dots
+    const dotGeo = new THREE.SphereGeometry(0.14,6,6);
+    const dotMats = [0x265df2,0x0891b2,0x16a34a,0xc27a07,0xdb2777];
+    const dots = dotMats.map((c,i)=>{
+      const m = new THREE.Mesh(dotGeo, new THREE.MeshBasicMaterial({color:c}));
+      scene.add(m);
+      return {mesh:m,phase:i*(Math.PI*2/5)};
+    });
+
+    function animate(){
+      requestAnimationFrame(animate);
+      const t = Date.now()*0.001;
+      wire.rotation.y = t*0.4; wire.rotation.x = t*0.22;
+      inner.rotation.y = -t*0.6; inner.rotation.z = t*0.18;
+      ring.rotation.z = t*0.15;
+      dots.forEach(d=>{
+        d.mesh.position.x = 3.8*Math.cos(t*0.7+d.phase);
+        d.mesh.position.z = 3.8*Math.sin(t*0.7+d.phase)*Math.cos(ring.rotation.x);
+        d.mesh.position.y = 3.8*Math.sin(t*0.7+d.phase)*Math.sin(ring.rotation.x);
+      });
+      renderer.render(scene,camera);
+    }
+    animate();
+  })();
+
+  // ── PHASER SPRINT CHALLENGE ─────────────────────────────
+  let _pGame=null;
+  function _pClose(result){
+    document.getElementById('phaserWrap').style.display='none';
+    if(_pGame){_pGame.destroy(true);_pGame=null;}
+    if(window._pCb){window._pCb(result);window._pCb=null;}
+  }
+  function _pLaunch(SceneClass,cb){
+    const wrap=document.getElementById('phaserWrap');
+    wrap.style.display='block';
+    if(_pGame){_pGame.destroy(true);_pGame=null;}
+    window._pCb=cb;
+    _pGame=new Phaser.Game({type:Phaser.CANVAS,width:window.innerWidth,height:window.innerHeight,parent:'phaserWrap',backgroundColor:'#090b0f',scene:[SceneClass],scale:{mode:Phaser.Scale.RESIZE}});
+  }
+
+  class SprintScene extends Phaser.Scene {
+    constructor(){super({key:'SprintScene'});}
+    create(){
+      const W=this.scale.width, H=this.scale.height;
+      this.shards=0; this.focus=0; this.timeLeft=20;
+      const tasks=['SHIP IT','CODE','DESIGN','TEST','DEPLOY','REVIEW','COMMIT','BUILD','FIX BUG','PUSH'];
+      const blockers=['SLACK','MEETING','SCOPE CREEP','REVERT','OUTAGE'];
+
+      this.add.text(W/2,H*0.08,'⚡ SPRINT CHALLENGE',{fontFamily:'Inter,sans-serif',fontSize:'18px',fontStyle:'bold',color:'#265df2'}).setOrigin(0.5);
+      this.add.text(W/2,H*0.14,'Tap TASKS · Dodge BLOCKERS',{fontFamily:'Inter,sans-serif',fontSize:'12px',color:'rgba(255,255,255,0.45)'}).setOrigin(0.5);
+      this.shardsText=this.add.text(W/2,H*0.22,'+0 SHARDS',{fontFamily:'Inter,sans-serif',fontSize:'22px',fontStyle:'bold',color:'#0891b2'}).setOrigin(0.5);
+      this.timerText=this.add.text(W-16,16,'20s',{fontFamily:'Inter,sans-serif',fontSize:'14px',color:'#c27a07'}).setOrigin(1,0);
+      this.timerBar=this.add.rectangle(20,H*0.27,W-40,6,0x265df2).setOrigin(0,0.5);
+
+      this.spawnTimer=this.time.addEvent({delay:800,loop:true,callback:()=>{
+        const isTask=Math.random()>0.3;
+        const label=isTask?tasks[Math.floor(Math.random()*tasks.length)]:blockers[Math.floor(Math.random()*blockers.length)];
+        const x=50+Math.random()*(W-100);
+        const pill=this.add.container(x,H+30);
+        const bg=this.add.rectangle(0,0,Math.max(label.length*9+28,90),36,isTask?0x0a1a3a:0x2a0a0a,0.95).setStrokeStyle(1.5,isTask?0x265df2:0xdb2777);
+        const txt=this.add.text(0,0,label,{fontFamily:'Inter,sans-serif',fontSize:'12px',fontStyle:'bold',color:isTask?'#60a5fa':'#f87171'}).setOrigin(0.5);
+        pill.add([bg,txt]);
+        pill.setInteractive(new Phaser.Geom.Rectangle(-70,-24,140,48),Phaser.Geom.Rectangle.Contains);
+        pill.userData={done:false};
+        pill.on('pointerdown',()=>{
+          if(pill.userData.done) return;
+          pill.userData.done=true;
+          if(isTask){
+            this.shards+=8; this.focus=Math.min(100,this.focus+5);
+            this.shardsText.setText('+'+this.shards+' SHARDS');
+            this.shardsText.setScale(1.25);
+            this.tweens.add({targets:this.shardsText,scaleX:1,scaleY:1,duration:180});
+            const pop=this.add.text(x,pill.y,'✅',{fontSize:'20px'}).setOrigin(0.5);
+            this.tweens.add({targets:pop,y:pop.y-50,alpha:0,duration:380,onComplete:()=>pop.destroy()});
+          } else {
+            this.shards=Math.max(0,this.shards-4);
+            this.shardsText.setText('+'+this.shards+' SHARDS');
+            this.cameras.main.shake(100,0.01);
+            const pop=this.add.text(x,pill.y,'🚫',{fontSize:'20px'}).setOrigin(0.5);
+            this.tweens.add({targets:pop,y:pop.y-40,alpha:0,duration:350,onComplete:()=>pop.destroy()});
+          }
+          this.tweens.add({targets:pill,alpha:0,scaleX:1.3,scaleY:1.3,duration:200,onComplete:()=>pill.destroy()});
+        });
+        this.tweens.add({targets:pill,y:-40,duration:4000+Math.random()*2000,ease:'Linear',onComplete:()=>{if(!pill.userData.done)pill.destroy();}});
+      }});
+
+      this.countdownTimer=this.time.addEvent({delay:1000,loop:true,callback:()=>{
+        this.timeLeft--;
+        this.timerText.setText(this.timeLeft+'s');
+        this.timerBar.width=(W-40)*(this.timeLeft/20);
+        if(this.timeLeft<=0){
+          this.spawnTimer.remove(); this.countdownTimer.remove();
+          this.add.rectangle(W/2,H/2,W-32,130,0x090b0f,0.96).setOrigin(0.5);
+          this.add.text(W/2,H/2-26,'💎 +'+this.shards+' SHARDS EARNED!',{fontFamily:'Inter,sans-serif',fontSize:'20px',fontStyle:'bold',color:'#0891b2'}).setOrigin(0.5);
+          this.add.text(W/2,H/2+12,'Sprint complete. Ship it. 🚀',{fontFamily:'Inter,sans-serif',fontSize:'13px',color:'rgba(255,255,255,0.55)'}).setOrigin(0.5);
+          this.time.delayedCall(2000,()=>_pClose({shards:this.shards}));
+        }
+      }});
+    }
+  }
+
+  function launchSprintChallenge(){
+    _pLaunch(SprintScene,result=>{
+      if(result&&result.shards>0){
+        state.shards=(state.shards||0)+result.shards;
+        document.getElementById('hq-shards').textContent=state.shards;
+        appendMeeting('Sprint complete! Earned '+result.shards+' shards. Total: '+state.shards);
+      }
+    });
+  }
 </script>
 </body>
 </html>
