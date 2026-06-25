@@ -247,7 +247,7 @@ main{overflow-y:auto;display:flex;flex-direction:column;}
   <div class="hdr-date" id="hdr-date"></div>
   <button class="hdr-tab active" onclick="showView('repo')" id="tab-repo">Command</button>
   <button class="hdr-tab" onclick="showView('all')" id="tab-all">All Repos</button>
-  <div class="relay-status" title="FEDGE Relay — run start_relay.bat to connect">
+  <div class="relay-status" onclick="openRelaySettings()" style="cursor:pointer" title="Tap to configure relay URL">
     <div class="relay-dot checking" id="relay-dot"></div>
     <span id="relay-label">Relay...</span>
   </div>
@@ -350,6 +350,32 @@ main{overflow-y:auto;display:flex;flex-direction:column;}
         <div class="exec-label" id="exec-result-label" style="display:none">Result</div>
         <div class="exec-result" id="exec-result"></div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- RELAY SETTINGS MODAL -->
+<div class="exec-overlay" id="relay-settings-overlay" onclick="if(event.target===this)closeRelaySettings()">
+  <div class="exec-modal" style="max-width:420px">
+    <div class="exec-hdr">
+      <div class="exec-hdr-title">⚙️ Relay Settings</div>
+      <button class="exec-close" onclick="closeRelaySettings()">✕</button>
+    </div>
+    <div class="exec-body" style="gap:16px">
+      <div style="font-size:12px;color:var(--muted);line-height:1.6">
+        <strong style="color:var(--txt)">On your PC:</strong> run <code style="background:var(--s2);padding:2px 6px;border-radius:4px;color:#a78bfa">start_relay.bat</code><br><br>
+        <strong style="color:var(--txt)">On your phone</strong> (same WiFi): set the URL to your PC's local IP.<br>
+        Your PC IP: <strong style="color:#f5c842">192.168.1.6</strong>
+      </div>
+      <div>
+        <div class="exec-label">Relay URL</div>
+        <input id="relay-url-input" type="url"
+          style="width:100%;background:var(--s2);border:1px solid var(--b2);border-radius:8px;color:var(--txt);font-size:14px;padding:10px 12px;font-family:inherit;"
+          placeholder="http://192.168.1.6:7820"/>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px">PC browser: <code>http://localhost:7820</code> · Phone: <code>http://192.168.1.6:7820</code></div>
+      </div>
+      <button class="exec-run" onclick="saveRelayUrl()">Save & Test Connection</button>
+      <div id="relay-test-result" style="font-size:12px;display:none;padding:8px 12px;border-radius:8px;"></div>
     </div>
   </div>
 </div>
@@ -584,13 +610,16 @@ async function freeSend(){
 }
 
 /* ── RELAY ── */
-const RELAY='http://localhost:7820';
+let RELAY = localStorage.getItem('fedge_relay_url') || 'http://localhost:7820';
 let relayOnline=false;
 let execRepo='', execAction='';
 
+// populate input with saved URL
+document.getElementById('relay-url-input').value = RELAY;
+
 function checkRelay(){
-  fetch(RELAY+'/ping',{method:'GET',signal:AbortSignal.timeout(2000)})
-    .then(r=>r.json()).then(d=>{
+  fetch(RELAY+'/ping',{method:'GET',signal:AbortSignal.timeout(3000)})
+    .then(r=>r.json()).then(()=>{
       relayOnline=true;
       document.getElementById('relay-dot').className='relay-dot online';
       document.getElementById('relay-label').textContent='Relay Online';
@@ -601,7 +630,42 @@ function checkRelay(){
     });
 }
 checkRelay();
-setInterval(checkRelay,10000);
+setInterval(checkRelay,8000);
+
+function openRelaySettings(){
+  document.getElementById('relay-url-input').value=RELAY;
+  document.getElementById('relay-test-result').style.display='none';
+  document.getElementById('relay-settings-overlay').className='exec-overlay open';
+}
+function closeRelaySettings(){
+  document.getElementById('relay-settings-overlay').className='exec-overlay';
+}
+async function saveRelayUrl(){
+  const url=document.getElementById('relay-url-input').value.trim().replace(/\/$/,'');
+  if(!url){return;}
+  RELAY=url;
+  localStorage.setItem('fedge_relay_url',url);
+  const res=document.getElementById('relay-test-result');
+  res.style.display='block';
+  res.style.background='rgba(251,191,36,.1)';
+  res.style.color='#fbbf24';
+  res.textContent='Testing connection to '+url+' …';
+  try{
+    const r=await fetch(url+'/ping',{signal:AbortSignal.timeout(4000)});
+    const d=await r.json();
+    res.style.background='rgba(74,222,128,.1)';
+    res.style.color='#4ade80';
+    res.textContent='✅ Connected! Claude CLI: '+(d.claude?'FOUND ✓':'NOT FOUND ✗');
+    relayOnline=true;
+    document.getElementById('relay-dot').className='relay-dot online';
+    document.getElementById('relay-label').textContent='Relay Online';
+    setTimeout(closeRelaySettings,1500);
+  }catch(e){
+    res.style.background='rgba(239,68,68,.1)';
+    res.style.color='#f87171';
+    res.textContent='❌ Could not connect. Make sure start_relay.bat is running and URL is correct.';
+  }
+}
 
 function openExec(title,prompt,repo){
   if(!relayOnline){showToast('⚠️','Relay offline — run start_relay.bat first');return;}
