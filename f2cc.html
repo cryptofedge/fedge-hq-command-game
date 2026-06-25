@@ -128,6 +128,25 @@ main{overflow-y:auto;display:flex;flex-direction:column;}
 .all-card-desc{font-size:11px;color:var(--muted);line-height:1.5;}
 .all-card-bottom{display:flex;gap:6px;flex-wrap:wrap;}
 
+/* ── FREE PROMPT BAR ── */
+.free-bar{display:flex;flex-direction:column;gap:8px;padding:14px 20px;border-top:1px solid var(--b1);background:var(--s1);flex-shrink:0;}
+.free-bar-top{display:flex;align-items:center;gap:8px;margin-bottom:2px;}
+.free-bar-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);flex:1;}
+.free-bar-repo{font-size:10px;color:var(--purple);background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.2);border-radius:5px;padding:2px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;}
+.free-input-row{display:flex;gap:8px;align-items:flex-end;}
+.free-textarea{flex:1;background:var(--s2);border:1px solid var(--b2);border-radius:10px;color:var(--txt);font-size:13px;padding:10px 14px;resize:none;font-family:inherit;line-height:1.5;min-height:44px;max-height:120px;overflow-y:auto;transition:border-color .15s;}
+.free-textarea:focus{outline:none;border-color:rgba(124,58,237,.5);}
+.free-textarea::placeholder{color:var(--muted);}
+.free-send{background:var(--grad);color:#fff;border:none;border-radius:10px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:18px;transition:opacity .15s;}
+.free-send:hover{opacity:.85;}
+.free-send:disabled{background:var(--b2);cursor:not-allowed;opacity:.5;}
+.free-copy{background:transparent;color:var(--muted);border:1px solid var(--b2);border-radius:10px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:16px;transition:all .15s;}
+.free-copy:hover{border-color:var(--purple2);color:var(--txt);}
+.free-result{background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.6;color:var(--txt);white-space:pre-wrap;word-break:break-word;max-height:200px;overflow-y:auto;display:none;}
+.free-result.show{display:block;}
+.free-thinking{font-size:12px;color:var(--muted);display:none;padding:4px 0;}
+.free-thinking.show{display:block;}
+
 /* ── MOBILE (≤ 768px) ── */
 @media(max-width:768px){
   html,body{height:100%;overflow:hidden;}
@@ -206,6 +225,10 @@ main{overflow-y:auto;display:flex;flex-direction:column;}
   .mob-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px;font-weight:700;letter-spacing:.04em;transition:color .15s;}
   .mob-nav-btn.active{color:var(--purple);}
   .mob-nav-btn svg{width:20px;height:20px;}
+  /* free bar on mobile */
+  .free-bar{padding:10px 14px!important;}
+  .free-textarea{font-size:16px!important;}/* prevent iOS zoom */
+  main{padding-bottom:130px!important;}/* space for free bar + bottom nav */
 }
 @media(min-width:769px){
   .mob-nav{display:none!important;}
@@ -275,6 +298,22 @@ main{overflow-y:auto;display:flex;flex-direction:column;}
         <div class="panel-title">Repo Context</div>
         <div id="ctx-panel"></div>
       </div>
+    </div>
+
+    <!-- FREE PROMPT BAR -->
+    <div class="free-bar">
+      <div class="free-bar-top">
+        <span class="free-bar-label">⚡ Tell FEDGE what to update</span>
+        <span class="free-bar-repo" id="free-repo-label">No repo selected</span>
+      </div>
+      <div class="free-input-row">
+        <textarea class="free-textarea" id="free-input" rows="1"
+          placeholder="e.g. Add a dark mode toggle to TradeStreet…"></textarea>
+        <button class="free-copy" id="free-copy-btn" onclick="freeCopy()" title="Copy to clipboard">📋</button>
+        <button class="free-send" id="free-send-btn" onclick="freeSend()" title="Execute via Relay">⚡</button>
+      </div>
+      <div class="free-thinking" id="free-thinking">⏳ Claude is on it…</div>
+      <div class="free-result" id="free-result"></div>
     </div>
   </div>
   <div id="view-all">
@@ -426,6 +465,8 @@ function selectRepo(id){
   const r=REPOS[id]; if(!r) return;
   document.querySelectorAll('.repo-btn').forEach(b=>b.classList.toggle('active',b.dataset.id===id));
   if(window.innerWidth<=768)mobShow('main');
+  freeRepo=r.repo; freeRepoName=r.name;
+  document.getElementById('free-repo-label').textContent=r.name;
   const av=document.getElementById('hero-av');
   av.textContent=r.avatar; av.style.background=r.color+'22'; av.style.border='1px solid '+r.color+'44'; av.style.color=r.color;
   document.getElementById('hero-name').textContent=r.name;
@@ -491,6 +532,55 @@ function copyPrompt(text){
     document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
     showToast('✅','Prompt copied — paste in Claude Code');
   });
+}
+
+/* ── FREE BAR ── */
+let freeRepo='', freeRepoName='';
+
+const freeInput=document.getElementById('free-input');
+freeInput.addEventListener('input',()=>{
+  freeInput.style.height='auto';
+  freeInput.style.height=Math.min(freeInput.scrollHeight,120)+'px';
+});
+freeInput.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();freeSend();}
+});
+
+function freeCopy(){
+  const txt=freeInput.value.trim();
+  if(!txt){showToast('⚠️','Type something first');return;}
+  const full=freeRepo?`[Repo: ${freeRepo}]\n\n${txt}`:txt;
+  copyPrompt(full);
+}
+
+async function freeSend(){
+  const txt=freeInput.value.trim();
+  if(!txt){showToast('⚠️','Type something first');return;}
+  if(!relayOnline){showToast('⚠️','Relay offline — use 📋 Copy or start start_relay.bat');return;}
+  const btn=document.getElementById('free-send-btn');
+  const thinking=document.getElementById('free-thinking');
+  const result=document.getElementById('free-result');
+  btn.disabled=true;
+  thinking.className='free-thinking show';
+  result.className='free-result';
+  try{
+    const res=await fetch(RELAY,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({message:txt,repo:freeRepo,action:'Free update'}),
+      signal:AbortSignal.timeout(180000)
+    });
+    const data=await res.json();
+    result.textContent=data.reply||'No response.';
+    result.className='free-result show';
+  }catch(e){
+    result.textContent='Error: '+e.message;
+    result.className='free-result show';
+  }
+  thinking.className='free-thinking';
+  btn.disabled=false;
+  freeInput.value='';
+  freeInput.style.height='auto';
 }
 
 /* ── RELAY ── */
