@@ -60,9 +60,39 @@ main{overflow-y:auto;display:flex;flex-direction:column;}
 .action-card:hover{border-color:var(--purple2);background:#13132a;}
 .action-card:active{transform:scale(.99);}
 .ac-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
-.ac-body{min-width:0;}
+.ac-body{min-width:0;flex:1;}
 .ac-title{font-size:13px;font-weight:700;margin-bottom:3px;}
 .ac-desc{font-size:11px;color:var(--muted);line-height:1.5;}
+.ac-btns{display:flex;gap:6px;margin-top:8px;}
+.ac-btn-copy{font-size:10px;padding:3px 9px;border-radius:5px;border:1px solid var(--b1);background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;}
+.ac-btn-copy:hover{border-color:var(--purple2);color:var(--txt);}
+.ac-btn-exec{font-size:10px;padding:3px 9px;border-radius:5px;border:1px solid rgba(245,200,66,.3);background:rgba(245,200,66,.08);color:#f5c842;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:4px;}
+.ac-btn-exec:hover{background:rgba(245,200,66,.18);border-color:#f5c842;}
+.ac-btn-exec.offline{border-color:var(--b1);color:var(--muted);background:transparent;cursor:not-allowed;}
+/* relay status */
+.relay-status{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);padding:0 8px;}
+.relay-dot{width:7px;height:7px;border-radius:50%;background:#404060;flex-shrink:0;transition:background .3s;}
+.relay-dot.online{background:#4ade80;box-shadow:0 0 6px rgba(74,222,128,.5);}
+.relay-dot.checking{background:#fbbf24;}
+/* execute modal */
+.exec-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,10,.75);z-index:500;align-items:center;justify-content:center;padding:20px;}
+.exec-overlay.open{display:flex;}
+.exec-modal{background:#0c0c22;border:1px solid rgba(245,200,66,.3);border-radius:16px;width:min(640px,100%);max-height:85vh;display:flex;flex-direction:column;overflow:hidden;}
+.exec-hdr{padding:16px 20px;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;}
+.exec-hdr-title{font-size:14px;font-weight:700;color:#f5c842;}
+.exec-close{background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:4px;}
+.exec-body{padding:16px 20px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;}
+.exec-label{font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px;}
+.exec-prompt{width:100%;background:var(--s2);border:1px solid var(--b1);border-radius:8px;color:var(--txt);font-size:12px;padding:10px 12px;resize:vertical;min-height:100px;font-family:inherit;line-height:1.5;}
+.exec-prompt:focus{outline:none;border-color:rgba(245,200,66,.4);}
+.exec-run{background:#f5c842;color:#000;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;width:100%;}
+.exec-run:hover{background:#f0d060;}
+.exec-run:disabled{background:#2a2a3a;color:var(--muted);cursor:not-allowed;}
+.exec-result{background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:12px;font-size:12px;line-height:1.6;color:var(--txt);white-space:pre-wrap;word-break:break-word;max-height:280px;overflow-y:auto;display:none;}
+.exec-result.show{display:block;}
+.exec-spinner{text-align:center;padding:20px;color:var(--muted);font-size:13px;display:none;}
+.exec-spinner.show{display:block;}
+.exec-status{font-size:11px;display:flex;align-items:center;gap:6px;}
 .ctx-block{background:var(--s2);border:1px solid var(--b1);border-radius:12px;padding:14px;margin-bottom:12px;}
 .ctx-block-title{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:8px;}
 .ctx-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
@@ -107,6 +137,10 @@ main{overflow-y:auto;display:flex;flex-direction:column;}
   <div class="hdr-date" id="hdr-date"></div>
   <button class="hdr-tab active" onclick="showView('repo')" id="tab-repo">Command</button>
   <button class="hdr-tab" onclick="showView('all')" id="tab-all">All Repos</button>
+  <div class="relay-status" title="FEDGE Relay — run start_relay.bat to connect">
+    <div class="relay-dot checking" id="relay-dot"></div>
+    <span id="relay-label">Relay...</span>
+  </div>
 </header>
 
 <aside>
@@ -168,6 +202,31 @@ main{overflow-y:auto;display:flex;flex-direction:column;}
 </div>
 
 <div id="toast"><span id="toast-icon">✅</span><span id="toast-msg">Prompt copied — paste it in Claude Code</span></div>
+
+<!-- EXECUTE MODAL -->
+<div class="exec-overlay" id="exec-overlay" onclick="if(event.target===this)closeExec()">
+  <div class="exec-modal">
+    <div class="exec-hdr">
+      <div>
+        <div class="exec-hdr-title" id="exec-title">⚡ Execute via FEDGE Relay</div>
+        <div class="exec-status" id="exec-status-line"></div>
+      </div>
+      <button class="exec-close" onclick="closeExec()">✕</button>
+    </div>
+    <div class="exec-body">
+      <div>
+        <div class="exec-label">Prompt (editable)</div>
+        <textarea class="exec-prompt" id="exec-prompt-ta" rows="5"></textarea>
+      </div>
+      <button class="exec-run" id="exec-run-btn" onclick="runExec()">⚡ Run with Claude</button>
+      <div class="exec-spinner" id="exec-spinner">⏳ Claude is working… this may take 30–60 seconds</div>
+      <div>
+        <div class="exec-label" id="exec-result-label" style="display:none">Result</div>
+        <div class="exec-result" id="exec-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
 const REPOS = {
@@ -264,8 +323,7 @@ function selectRepo(id){
   const ag=document.getElementById('action-grid'); ag.innerHTML='';
   (r.actions||[]).forEach(a=>{
     const d=document.createElement('div'); d.className='action-card';
-    d.onclick=()=>copyPrompt(a.prompt);
-    d.innerHTML=`<div class="ac-icon">${a.icon}</div><div class="ac-body"><div class="ac-title">${a.title}</div><div class="ac-desc">${a.desc}</div></div>`;
+    d.innerHTML=`<div class="ac-icon">${a.icon}</div><div class="ac-body"><div class="ac-title">${a.title}</div><div class="ac-desc">${a.desc}</div><div class="ac-btns"><button class="ac-btn-copy" onclick="event.stopPropagation();copyPrompt(${JSON.stringify(a.prompt)})">📋 Copy</button><button class="ac-btn-exec${relayOnline?'':' offline'}" onclick="event.stopPropagation();openExec(${JSON.stringify(a.title)},${JSON.stringify(a.prompt)},${JSON.stringify(r.repo)})" ${relayOnline?'':'title="Start start_relay.bat to enable"'}>⚡ Execute</button></div></div></div>`;
     ag.appendChild(d);
   });
   const cp=document.getElementById('ctx-panel'); cp.innerHTML='';
@@ -318,6 +376,70 @@ function copyPrompt(text){
     document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
     showToast('✅','Prompt copied — paste in Claude Code');
   });
+}
+
+/* ── RELAY ── */
+const RELAY='http://localhost:7820';
+let relayOnline=false;
+let execRepo='', execAction='';
+
+function checkRelay(){
+  fetch(RELAY+'/ping',{method:'GET',signal:AbortSignal.timeout(2000)})
+    .then(r=>r.json()).then(d=>{
+      relayOnline=true;
+      document.getElementById('relay-dot').className='relay-dot online';
+      document.getElementById('relay-label').textContent='Relay Online';
+    }).catch(()=>{
+      relayOnline=false;
+      document.getElementById('relay-dot').className='relay-dot';
+      document.getElementById('relay-label').textContent='Relay Offline';
+    });
+}
+checkRelay();
+setInterval(checkRelay,10000);
+
+function openExec(title,prompt,repo){
+  if(!relayOnline){showToast('⚠️','Relay offline — run start_relay.bat first');return;}
+  execRepo=repo; execAction=title;
+  document.getElementById('exec-title').textContent='⚡ '+title;
+  document.getElementById('exec-prompt-ta').value=prompt;
+  document.getElementById('exec-status-line').innerHTML=`<span style="color:var(--muted);font-size:11px">Repo: <strong style="color:var(--txt)">${repo||'N/A'}</strong></span>`;
+  document.getElementById('exec-result').className='exec-result';
+  document.getElementById('exec-result-label').style.display='none';
+  document.getElementById('exec-spinner').className='exec-spinner';
+  document.getElementById('exec-run-btn').disabled=false;
+  document.getElementById('exec-overlay').className='exec-overlay open';
+}
+
+function closeExec(){
+  document.getElementById('exec-overlay').className='exec-overlay';
+}
+
+async function runExec(){
+  const prompt=document.getElementById('exec-prompt-ta').value.trim();
+  if(!prompt)return;
+  document.getElementById('exec-run-btn').disabled=true;
+  document.getElementById('exec-spinner').className='exec-spinner show';
+  document.getElementById('exec-result').className='exec-result';
+  document.getElementById('exec-result-label').style.display='none';
+  try{
+    const res=await fetch(RELAY,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({message:prompt,repo:execRepo,action:execAction}),
+      signal:AbortSignal.timeout(150000)
+    });
+    const data=await res.json();
+    document.getElementById('exec-result').textContent=data.reply||'No response.';
+    document.getElementById('exec-result').className='exec-result show';
+    document.getElementById('exec-result-label').style.display='block';
+  }catch(e){
+    document.getElementById('exec-result').textContent='Error: '+e.message+'\n\nMake sure start_relay.bat is running.';
+    document.getElementById('exec-result').className='exec-result show';
+    document.getElementById('exec-result-label').style.display='block';
+  }
+  document.getElementById('exec-spinner').className='exec-spinner';
+  document.getElementById('exec-run-btn').disabled=false;
 }
 
 let toastTimer;
