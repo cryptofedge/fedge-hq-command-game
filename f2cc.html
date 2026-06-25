@@ -5,797 +5,338 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FEDGE 2.O — Command Center</title>
 <style>
-  :root {
-    --bg: #07070f;
-    --surface: #0d0d1e;
-    --card: #111126;
-    --border: #1e1e3a;
-    --border2: #2a2a50;
-    --text: #e8e9f4;
-    --muted: #5a5a80;
-    --muted2: #3a3a60;
-    --purple: #7c3aed;
-    --purple2: #4f46e5;
-    --blue: #265df2;
-    --cyan: #0891b2;
-    --green: #16a34a;
-    --amber: #c27a07;
-    --pink: #db2777;
-    --gold: #f5c842;
-    --accent: linear-gradient(135deg,#7c3aed,#4f46e5);
-  }
-  *{box-sizing:border-box;margin:0;padding:0;}
-  html,body{height:100%;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,sans-serif;font-size:14px;overflow:hidden;}
-
-  /* ── SETUP SCREEN ─────────────────────────────────── */
-  #setup{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px;}
-  #setup.hidden{display:none;}
-  .setup-card{width:min(460px,100%);background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:36px;display:flex;flex-direction:column;gap:20px;}
-  .setup-logo{font-size:28px;font-weight:900;background:var(--accent);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-1px;}
-  .setup-sub{color:var(--muted);line-height:1.6;font-size:13px;}
-  .setup-field{display:flex;flex-direction:column;gap:6px;}
-  .setup-field label{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
-  .setup-field input{background:#0a0a18;border:1px solid var(--border2);border-radius:10px;padding:12px 14px;color:var(--text);font-size:13px;outline:none;font-family:inherit;}
-  .setup-field input:focus{border-color:var(--purple);}
-  .setup-field small{font-size:11px;color:var(--muted);}
-  .btn-primary{background:var(--accent);border:none;border-radius:10px;padding:13px 20px;color:#fff;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit;transition:opacity .2s;}
-  .btn-primary:hover{opacity:.88;}
-  .setup-note{font-size:11px;color:var(--muted);text-align:center;line-height:1.7;}
-
-  /* ── LAYOUT ───────────────────────────────────────── */
-  #app{display:grid;grid-template-columns:260px 1fr;grid-template-rows:56px 1fr;height:100vh;}
-  #app.hidden{display:none;}
-
-  /* ── HEADER ───────────────────────────────────────── */
-  header{grid-column:1/-1;display:flex;align-items:center;gap:12px;padding:0 18px;border-bottom:1px solid var(--border);background:var(--surface);position:relative;z-index:10;}
-  .hdr-logo{font-size:15px;font-weight:900;background:var(--accent);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.5px;white-space:nowrap;}
-  .hdr-sep{width:1px;height:20px;background:var(--border2);}
-  .hdr-status{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#00e676;}
-  .hdr-status::before{content:'';width:7px;height:7px;border-radius:50%;background:#00e676;box-shadow:0 0 6px #00e676;animation:pulse 2s infinite;}
-  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
-  .hdr-time{margin-left:auto;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;}
-  .hdr-actions{display:flex;gap:8px;margin-left:12px;}
-  .hdr-btn{background:transparent;border:1px solid var(--border2);border-radius:8px;padding:6px 12px;color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;}
-  .hdr-btn:hover{border-color:var(--purple);color:var(--text);}
-  .hdr-model{font-size:11px;color:var(--muted);background:var(--card);border:1px solid var(--border);border-radius:6px;padding:4px 8px;}
-
-  /* ── SIDEBAR ──────────────────────────────────────── */
-  aside{background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column;gap:0;}
-  aside::-webkit-scrollbar{width:4px;}
-  aside::-webkit-scrollbar-track{background:transparent;}
-  aside::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
-
-  .side-section{padding:14px 14px 8px;}
-  .side-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px;}
-
-  /* Repo cards in sidebar */
-  .repo-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;cursor:pointer;transition:background .12s;margin-bottom:3px;text-decoration:none;color:inherit;}
-  .repo-item:hover,.repo-item.active{background:var(--card);}
-  .repo-item.active{border-left:2px solid var(--purple);padding-left:8px;}
-  .repo-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-  .repo-info{min-width:0;flex:1;}
-  .repo-name{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .repo-tag{font-size:10px;color:var(--muted);margin-top:1px;}
-  .repo-pill{font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;background:var(--card);border:1px solid var(--border2);color:var(--muted);flex-shrink:0;}
-  .repo-pill.live{background:rgba(22,163,74,.12);border-color:rgba(22,163,74,.3);color:#4ade80;}
-  .repo-pill.dev{background:rgba(194,122,7,.12);border-color:rgba(194,122,7,.3);color:#fbbf24;}
-
-  /* Quick actions */
-  .qa-btn{width:100%;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:9px 12px;color:var(--text);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;text-align:left;transition:border-color .15s,background .15s;margin-bottom:6px;display:flex;align-items:center;gap:8px;}
-  .qa-btn:hover{border-color:var(--purple2);background:#13132a;}
-  .qa-btn .qa-icon{font-size:14px;}
-
-  /* Project progress */
-  .prog-row{margin-bottom:10px;}
-  .prog-head{display:flex;justify-content:space-between;margin-bottom:4px;}
-  .prog-name{font-size:11px;font-weight:700;color:var(--text);}
-  .prog-val{font-size:10px;color:var(--muted);}
-  .prog-track{height:4px;background:var(--border2);border-radius:4px;overflow:hidden;}
-  .prog-fill{height:100%;border-radius:4px;transition:width .6s ease;}
-
-  /* KPI strip */
-  .kpi-strip{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:0 14px 10px;}
-  .kpi-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;}
-  .kpi-val{font-size:20px;font-weight:900;line-height:1;}
-  .kpi-label{font-size:10px;color:var(--muted);margin-top:3px;font-weight:700;}
-
-  /* ── MAIN CHAT AREA ───────────────────────────────── */
-  main{display:flex;flex-direction:column;overflow:hidden;background:var(--bg);}
-
-  /* Repo detail panel */
-  #repo-panel{display:none;border-bottom:1px solid var(--border);background:var(--surface);padding:14px 20px;gap:16px;align-items:center;}
-  #repo-panel.show{display:flex;}
-  .rp-avatar{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;flex-shrink:0;}
-  .rp-info{flex:1;min-width:0;}
-  .rp-name{font-size:14px;font-weight:800;}
-  .rp-desc{font-size:12px;color:var(--muted);margin-top:2px;}
-  .rp-actions{display:flex;gap:8px;}
-  .rp-btn{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 12px;color:var(--text);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:5px;transition:border-color .15s;}
-  .rp-btn:hover{border-color:var(--purple);}
-  .rp-btn.primary{background:var(--accent);border:none;color:#fff;}
-
-  /* Chat messages */
-  #chat-scroll{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;}
-  #chat-scroll::-webkit-scrollbar{width:4px;}
-  #chat-scroll::-webkit-scrollbar-track{background:transparent;}
-  #chat-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
-
-  .msg{display:flex;gap:12px;max-width:860px;animation:fadeUp .2s ease;}
-  .msg.user{align-self:flex-end;flex-direction:row-reverse;}
-  @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-  .msg-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;margin-top:2px;}
-  .msg-avatar.claude{background:var(--accent);color:#fff;}
-  .msg-avatar.user{background:var(--card);border:1px solid var(--border2);color:var(--muted);}
-  .msg-body{min-width:0;}
-  .msg-name{font-size:10px;font-weight:700;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px;}
-  .msg-bubble{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:12px 16px;font-size:13px;line-height:1.75;color:var(--text);}
-  .msg.user .msg-bubble{background:linear-gradient(135deg,#1a1040,#0f0f28);border-color:var(--purple2);border-radius:16px 16px 4px 16px;}
-  .msg.claude .msg-bubble{border-radius:4px 16px 16px 16px;}
-  .msg-bubble p{margin:0 0 10px;}
-  .msg-bubble p:last-child{margin:0;}
-  .msg-bubble code{background:#0a0a18;border:1px solid var(--border2);border-radius:5px;padding:2px 6px;font-size:12px;font-family:ui-monospace,Menlo,monospace;color:#93c5fd;}
-  .msg-bubble pre{background:#0a0a18;border:1px solid var(--border2);border-radius:10px;padding:14px;overflow-x:auto;margin:8px 0;}
-  .msg-bubble pre code{background:none;border:none;padding:0;font-size:12px;}
-  .msg-bubble strong{color:#e8e9f4;font-weight:700;}
-  .msg-bubble h3{font-size:14px;font-weight:800;margin:10px 0 6px;color:var(--gold);}
-  .msg-bubble ul,.msg-bubble ol{padding-left:18px;margin:6px 0;}
-  .msg-bubble li{margin-bottom:4px;}
-  .msg-bubble a{color:#93c5fd;text-decoration:underline;}
-
-  /* Typing indicator */
-  .typing-bubble{background:var(--surface);border:1px solid var(--border);border-radius:4px 16px 16px 16px;padding:12px 16px;display:flex;gap:5px;align-items:center;}
-  .typing-dot{width:7px;height:7px;border-radius:50%;background:var(--purple);animation:tdot 1.2s ease-in-out infinite;}
-  .typing-dot:nth-child(2){animation-delay:.2s;}
-  .typing-dot:nth-child(3){animation-delay:.4s;}
-  @keyframes tdot{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
-
-  /* Empty state */
-  .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:14px;text-align:center;padding:40px;}
-  .empty-logo{font-size:40px;font-weight:900;background:var(--accent);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-  .empty-sub{font-size:13px;color:var(--muted);max-width:360px;line-height:1.7;}
-  .suggestions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:4px;}
-  .suggest-chip{background:var(--card);border:1px solid var(--border2);border-radius:20px;padding:7px 14px;font-size:12px;color:var(--muted);cursor:pointer;transition:all .15s;font-family:inherit;}
-  .suggest-chip:hover{border-color:var(--purple);color:var(--text);}
-
-  /* Input bar */
-  .chat-input-wrap{border-top:1px solid var(--border);padding:14px 20px;background:var(--surface);}
-  .chat-input-row{display:flex;gap:10px;background:var(--card);border:1px solid var(--border2);border-radius:14px;padding:4px 4px 4px 16px;transition:border-color .15s;}
-  .chat-input-row:focus-within{border-color:var(--purple);}
-  #chat-input{flex:1;background:none;border:none;outline:none;color:var(--text);font-size:14px;padding:10px 0;font-family:inherit;resize:none;max-height:140px;min-height:20px;line-height:1.5;}
-  #chat-input::placeholder{color:var(--muted);}
-  #chat-send{background:var(--accent);border:none;border-radius:10px;width:40px;height:40px;cursor:pointer;color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .15s;}
-  #chat-send:disabled{opacity:.3;cursor:not-allowed;}
-  .input-footer{display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding:0 2px;}
-  .input-hint{font-size:11px;color:var(--muted);}
-
-  /* Scrollbar for aside */
-  aside::-webkit-scrollbar{width:3px;}
-
-  /* Context notice */
-  .ctx-notice{background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);border-radius:10px;padding:10px 14px;font-size:12px;color:#a78bfa;line-height:1.6;text-align:center;margin:0 14px 10px;}
-
-  @media(max-width:700px){
-    #app{grid-template-columns:1fr;grid-template-rows:56px auto 1fr;}
-    aside{display:none;}
-  }
+:root{
+  --bg:#07070f;--s1:#0d0d1e;--s2:#111126;--b1:#1a1a35;--b2:#26264a;
+  --txt:#e8e9f4;--muted:#5a5a80;
+  --purple:#7c3aed;--purple2:#4f46e5;
+  --grad:linear-gradient(135deg,#7c3aed,#4f46e5);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:Inter,ui-sans-serif,system-ui,-apple-system,sans-serif;font-size:14px;}
+a{color:inherit;text-decoration:none;}
+button,input{font:inherit;}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:4px;}
+#shell{display:grid;grid-template-columns:240px 1fr;grid-template-rows:58px 1fr;height:100vh;overflow:hidden;}
+header{grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:0 20px;border-bottom:1px solid var(--b1);background:var(--s1);z-index:20;}
+.hdr-logo{height:28px;width:auto;filter:drop-shadow(0 0 8px rgba(124,58,237,.5));}
+.hdr-divider{width:1px;height:22px;background:var(--b2);}
+.hdr-title{font-size:13px;font-weight:800;color:var(--txt);letter-spacing:-.2px;}
+.hdr-status{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#4ade80;margin-left:4px;}
+.hdr-status::before{content:'';width:6px;height:6px;border-radius:50%;background:#4ade80;box-shadow:0 0 6px #4ade80;animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.hdr-date{margin-left:auto;font-size:11px;color:var(--muted);}
+.hdr-tab{background:transparent;border:1px solid var(--b2);border-radius:8px;padding:5px 12px;color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;margin-left:8px;}
+.hdr-tab:hover,.hdr-tab.active{border-color:var(--purple);color:var(--txt);background:rgba(124,58,237,.1);}
+aside{background:var(--s1);border-right:1px solid var(--b1);overflow-y:auto;display:flex;flex-direction:column;}
+.side-sec{padding:14px 12px 6px;}
+.side-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px;padding:0 2px;}
+.repo-btn{width:100%;display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;cursor:pointer;transition:background .1s;border:none;background:transparent;color:var(--txt);text-align:left;margin-bottom:2px;}
+.repo-btn:hover{background:var(--s2);}
+.repo-btn.active{background:var(--s2);border-left:2px solid var(--purple);padding-left:8px;}
+.repo-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.repo-info{min-width:0;flex:1;}
+.repo-name{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.repo-sub{font-size:10px;color:var(--muted);margin-top:1px;}
+.repo-badge{font-size:9px;font-weight:800;padding:2px 7px;border-radius:5px;flex-shrink:0;}
+.badge-live{background:rgba(74,222,128,.12);color:#4ade80;border:1px solid rgba(74,222,128,.25);}
+.badge-dev{background:rgba(251,191,36,.1);color:#fbbf24;border:1px solid rgba(251,191,36,.2);}
+.badge-priv{background:rgba(219,39,119,.1);color:#f472b6;border:1px solid rgba(219,39,119,.2);}
+main{overflow-y:auto;display:flex;flex-direction:column;}
+.repo-hero{display:flex;align-items:center;gap:16px;padding:18px 24px;border-bottom:1px solid var(--b1);background:var(--s1);flex-shrink:0;}
+.repo-av{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;flex-shrink:0;}
+.repo-hero-info{flex:1;min-width:0;}
+.repo-hero-name{font-size:16px;font-weight:900;margin-bottom:3px;}
+.repo-hero-desc{font-size:12px;color:var(--muted);line-height:1.5;}
+.repo-hero-links{display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap;}
+.link-btn{display:inline-flex;align-items:center;gap:5px;background:var(--s2);border:1px solid var(--b2);border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;color:var(--txt);cursor:pointer;transition:border-color .15s;text-decoration:none;}
+.link-btn:hover{border-color:var(--purple);}
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:0;flex:1;min-height:0;}
+.panel{padding:20px 24px;overflow-y:auto;}
+.panel-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:14px;}
+.action-grid{display:grid;gap:8px;}
+.action-card{background:var(--s2);border:1px solid var(--b1);border-radius:12px;padding:13px 15px;cursor:pointer;transition:border-color .15s,background .15s;display:flex;align-items:flex-start;gap:12px;}
+.action-card:hover{border-color:var(--purple2);background:#13132a;}
+.action-card:active{transform:scale(.99);}
+.ac-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+.ac-body{min-width:0;}
+.ac-title{font-size:13px;font-weight:700;margin-bottom:3px;}
+.ac-desc{font-size:11px;color:var(--muted);line-height:1.5;}
+.ctx-block{background:var(--s2);border:1px solid var(--b1);border-radius:12px;padding:14px;margin-bottom:12px;}
+.ctx-block-title{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:8px;}
+.ctx-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.ctx-row:last-child{margin-bottom:0;}
+.ctx-key{font-size:11px;color:var(--muted);}
+.ctx-val{font-size:11px;font-weight:700;color:var(--txt);}
+.ctx-val a{color:#93c5fd;}
+.ctx-val a:hover{text-decoration:underline;}
+.prog-track{height:4px;background:var(--b2);border-radius:4px;overflow:hidden;margin-top:6px;}
+.prog-fill{height:100%;border-radius:4px;}
+.tech-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;}
+.tech-chip{background:var(--b1);border:1px solid var(--b2);border-radius:6px;padding:3px 8px;font-size:10px;font-weight:700;color:var(--muted);}
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--grad);color:#fff;border-radius:12px;padding:12px 22px;font-size:13px;font-weight:800;z-index:999;transition:transform .3s cubic-bezier(.34,1.56,.64,1);display:flex;align-items:center;gap:10px;box-shadow:0 8px 30px rgba(124,58,237,.4);pointer-events:none;white-space:nowrap;}
+#toast.show{transform:translateX(-50%) translateY(0);}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:16px 24px;border-bottom:1px solid var(--b1);flex-shrink:0;}
+.kpi{background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:12px 14px;}
+.kpi-val{font-size:22px;font-weight:900;line-height:1;margin-bottom:3px;}
+.kpi-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);}
+#view-all{display:none;padding:20px 24px;overflow-y:auto;}
+.all-section-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:20px 0 10px;padding-bottom:8px;border-bottom:1px solid var(--b1);}
+.all-section-title:first-child{margin-top:0;}
+.all-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-bottom:4px;}
+.all-card{background:var(--s2);border:1px solid var(--b1);border-radius:12px;padding:14px;cursor:pointer;transition:border-color .15s;display:flex;flex-direction:column;gap:10px;}
+.all-card:hover{border-color:var(--purple2);}
+.all-card-top{display:flex;align-items:center;gap:10px;}
+.all-card-av{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;flex-shrink:0;}
+.all-card-info{flex:1;min-width:0;}
+.all-card-name{font-size:13px;font-weight:800;margin-bottom:2px;}
+.all-card-repo{font-size:10px;color:var(--muted);}
+.all-card-desc{font-size:11px;color:var(--muted);line-height:1.5;}
+.all-card-bottom{display:flex;gap:6px;flex-wrap:wrap;}
 </style>
 </head>
 <body>
+<div id="shell">
 
-<!-- ── SETUP SCREEN ──────────────────────────────────────── -->
-<div id="setup">
-  <div class="setup-card">
-    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAYAAACOEfKtAAAh10lEQVR4nN19CXxVxfX/OTP37S9kD1sQCIGwIwaBSiVQK1JAi9hELVJxA5cq1WLVapvE/lz6d6nWVgS1imhtk1q1aMWtELCgaGRPJOxL2EJCSN5+78z8P2fuCwZkeQlg+/udzycfkvfunZl77lm/58yA8B+gskLghWUgEUHR38OHD+/w4PkNI7J8arSfy3yXwXMQVGclRZJCRM6Mw0pZB0MCt0QE+3xvhC97YoP/048+qjxM9ysFWF4ErKgcxLf9LPhtTlZcDKyEJi0FSX//49b+3+2TErsmxanG+wzR3e8kfiIoqcBSEqRigEoBQwUcEZArAOQQjCI0C7az2TTe3xHir1z8ZNUnNJ6Kj18aH///FANVWSHHonItIR/N6veDXsmxe7LcqsDrVgCmgLAJ9NSCWAQKUC8MAVEBiSkJmZY1BoqEknkMQHBwCMcQDoTZso1N/LFLntq48Ni5/i8wEFUZMCwC8ezUvLzxvdQjXT3icqchIBIRSiAKpYAzbNtapNJ8lRyAedyIMclhd9D4x0f7XPfMnLf+K1UGHIu0JGozcbaInW2VZQiKmLd0Vr9bivLMz3smRy8XIiqDESkkIkma0VbmEdE9DJGTOIYiSgjTEjnJ5mU/6hb8fMVd/W6hOcnG0hrgf6MEqmJgtq3r76y6z5zTL11eb8ViELZQcAa83eMCSNTaDsax30kFws2AGy4Dvqpnr/RbkHEz7P40/PVazjydlbej4gu+YdzItC2/Mt/vlyWuD0diVkSgOi3mKZBuQzGvm2nmHaubDIFHJahI2LT6ZsqfbLm+/oO7JvXJoLWQ54f/DRKoSG1LQd51+eCsnw4MftAjVQwJBoWJiI7TGZccs9/Ljd2Nat2uZvbB4Ez5c6akkhB3OK3XoA2vMr1e7tjZzNaWbfZffPeraw+cDUk8oxJYTPamBNR1l12QdOvA4KIeKZp51ukyTyll+b1o7GiC6o8DyT+44Kmts7c34VseD6Mo5xve1vbg6GgOCeucJDX4yp6BD+8sHJnGHwR5pm3iGRtMAWDJAEDEAn7fkP1/z0kVQwMhzTzjtMZVyvJ5ubGtga984jNeMP13a2rJw67aL37TFAbpoFDxBPdyRCMQsqxuKXLwbXl1b8p+/Z20Rh0qnSE6c2+juIDCBlE5e8+c3FT5fVJbdqaY1+hYMmNR6rhnFm2u07ZsA6hpL+/88mAIlrqcyOA4UthCtIZQUJq90tXo1ZdG59EaofjM2cMzwkBFgWtphbX0jrzrhnYSN0ZClgnITkNtkRyG5fMwY3M9fjb5bc+kjysrD5MNs9O1AkZSdDDE/qotICnyyYihIxw0zcGZ8tplP+89A0vBIilu//paDX26AyiyKYXlcs70fr0HZMT+IE1TWAqNeJrbLpJSCp8HjW2Hnet/+S/PhHVr1wb/Wgi8xQGUQAWFMqq6gX3YEFSmgWDYCcsJV0lOyLBiQvRPtZ6af8OAfqwIhF77f1wCB5DdAzW2i/V8mld6w5Yd5LZ3OKGU9LmR7wnwXWVb3T8o/7SqgZjXGigoLQVFgjf9lc3bAqba4jJIi0/+xhgixiwFaW7p+U7H0IsKFMKAQlon/scYqHTOCWLJrNzr89JEQSgiLcoO2jsepWduA+FQ1Agu3u2+7N7X1u1WhYVHMa9lavlXrYIypvg6MBhx4aThiQ5tGHJaY+80/M6yO/vOoHxZlRWeFg/afbP2ZBvK1b0TB6X2SbEelkJKBXg644GDKaHQYCv2O6675oWq1V/MyHdgefnxGbOhQEtOVPBN9t2JmQxao7As2TvZ/J9npvVNJ/MTRyraRe3nfrFtk67o2zy7czJ2DJuC7FK7x0NQlsvtMFbVGQ9N+sPGcmLesHmV5ok4syT+b1iqvRq2SXgeYBFLyY5JkDG6i3WvxiTLj5JCLC4uZmVlZXzx4sUG/SiluCIg6Djqzk4jYBZP3TCiY7cO+FMrakmlTkd1lfC6uVFzkP1r5BObHlBzNfOsx64Z3vOx64cNPDLnUVRhP4ASdTbm8o2E5MSkkJsxS3b2iFv/eOWAblBULhcXFxCjaA5VWloqi4qKxNixYy36QUSBiHoWYmacqXq+dsVpJVDAECusVXcfvK2jHzsEw2AxbM9YCBKU9DgQ64Ls4JJ64xpa2IaSsAb/vtvx8FRpwR4AWE8BcOlxRghEpaUUp1AmYX9A2GxMKJHZAbzf7RaehQCzobTCglKE4uJi/7hx47K9Xm9nznmyEAJCoVBTXV1d7eTJk7cjYrRlHGK40S7bV1oh7r7sgqRO3n03WqZFJoS1z4goMFBKiU5jzSHXjTPnVe/t0xmMMVBl0beZLvMa6YKn6Pcl2ubZUteaTG2/2h4ykcaIqFAdfXx64bj+DxdMuWP4yGHDLktJSRnp9/v7pKWl+RyOr0PZUCgkGhoadgUCgc/37t37z4ceeugNRGxuMwOXFBfwsaUV1md96q/omKQ6h8JKtNfzSqmE12cY6/azFy5+qvptVVxgUIw3thR0XJmdYuZtrhM+unbMN+4u0Gqc4naShsXdbOJzU6gVsZTo2AHS7xoUu+ozxHfMhr1bNtXVBQ4cOODw+/0dsrKyemZnZ1+UmZl5nc/n6+D1enukpqb26NatW+GLL774wMqVK2e0mYFjoEJ7xUxn7CZUNgLfHlJKSa8L2e7DfMdTX2XdpdRmBlAhSkoKeClUyPPTrR+4/KjEQehwsnEkYKqdjbQncqfgR0Int5z+s5kznz3OBesBYGF5efn88ePHL/b7/X4ppWKMQUZGRq+hQ4eWt8mJtMBBC67r3z/NDSOiMW1P2iF9SIm+MhXDNQf5zX/6x/JmKLcDcoi/oBSnmAhKO/as443QIpEuEFlk/9qT99DaI1Gp0tw47I0Zfc8j+0vOhLww2be493UVFhauam5u/ifhE8Q8pRQJnvB6vWlt9MIF+vpB6ZErkn3ILaVEe1XX7eW8psH5yqRnaxaR6lJATuJML6j46j4ZPoc8H2IC/IZMse861v7Zf7uY7Npm/W1FAkB08CH2ToldgYiKXgx5YfK6tm0AbY8Nw9CmhCx2/HPe1NT0XtsYWFKhGZbsFpeCtNoWOrSC5D1OwLomaFhc551tlyJtqYMyO1T5boYYluLBVLAUBVpp+rsBxwhZ/G+nA3u0Ktu1mXTwb0lIdsEk/Rbiz0hEkkiXPP/88x19Pt9Y+p0kkK4LBAKh9evXz06YgRSHkYq9PjOvRwcnDonFtPlrcxyJpBcOg1U3sOJZL62uWwIF7EgdN55ddPapEW6CBySAE0SS/d1RDEQCAwAKOUeVS3aMQpO2rkUPBMCiMaU6ONSA12/o3ZeesQVkKCkp4SSJF1100a+8Xi+tg5hL62A1NTU3T5gwoSphBoyJq29ukjU6zYNOU4LQprsNROix18X5jkPW6oLfnzeHIKWxpV+/cSixJdFj4AgbQaGiOibTZ1QmaLmsuNiO+p6euqqzh8tsk5SsnRJINwlQIsULPDdFkWsHeqlk5xDRXLp06UVdunS5tRXzjOrq6uL8/PwFdE3iDBxQoSUgxSHH6PfTDq/HESAiEWqa3LMBjhS+W8ahYFLm5ua6nKgGSEtDUICMJeXmjnfFs13NJAqq6d+ByebgVA9zm1K3ibQ7n9W8R0JqhGbgmBFTSPKst956K2/w4MF/dbn09LRex7Zt2x7q37//g3EGW4mrYKGWAOZ2wHAQ0rYdbUzX3B7kO5uMd8b9vubjeOFbHCtVPx/FO7u56BST9oNxVL4f5VV5jxosrurpfn6+YdB1VFs6LWLKUuBkYtidT9zpwQmzonPnzu01evToRcnJyelxR+LcuHHjQzk5OQ+0ME/fmMjoZKDJNjw9dVAXFxO9TEvR02KiqyMbT7WLpjCK9fXwAElSefnR1wyossfLSxPdk1zcKaWSyvYM3pwUp/aAJcUtc9qqnuyQo2hx7XFmxxDSM/mdru6uB3/nXvDG4uzLL7/8YwqaKdkh5tXU1DzQt2/fFuYdefEJMZA6n+jfc1ODfZLdpDKqTSqDCoTLbbCdzUbZFXM3rSFveyzGl9nflioPmDkuciBI0Y62gc40v9/Tcl1LqHPv5L7pbq6GC1OdCWAYJXLlMQ85xt537U2TLhn5UWZmZndS21gs5tiwYcPteXl5D7Vi3hHzldDEhfGH8zmxn9PQv8o2Sh87HARz4yH2oG5FO0b6WgfGfgO76lUpildBObhiaES0Jy5pFeqMy46NzPBhckzoFo72SyAiMMZBBBowmjsOvnf7E79N8bnz6KumpqbI6tWrpwwcOPAPrdT2KNvfpjeX5IbedurelvUq4XAzVhtkZT+aV/MVYW8n6+NzOqATfO0wlJMjJEmbgeWk5i2hThJOMAyN5rS7+EIpPEoBItQIctQt4Js6Hwxvul5bfUPDV4sXL75wxIgRb7a2ecdSYgyMe2ADVc+2rFeR5wXgjSEQGxpdD7eg2CebgwOkxBXVjhkQwOfh7hY1Z6UV1vjxuS6/oSYqixShnSg4AVGxAFhoAJ/8e/BNeASQGZJGrK3d/fqvHnjggsmTJ68i7O9EzCMy2uCByUt1ot8oP0hQBi23hxs7DuI/iuZWVR3reY+ZQzMQkadAS4aoQBmUaRuGlsBMqKNyJtzRh52f4RXdI6aU1KQFbSHU9RNQwXowuw4F12VPgLPreRpWUGYz2/XBMxu7T7r/x3QpodIEqJ5suEQmjyf5hRwUZiQqgUpLk2LhKML2gPNxWvTxbN8R0gaORFR4bcupcXptLWQkpoNpHwT1erv75JVupzbEbQtfmAHMjICIBkCNvBm8170Nrq7n6bVGdleCePmHwJb+P/e1xcVuAhaKiopOOf4pJbAlTb/m4o1uh0N6KbiNP9zJieI+N+dbGvmK8c9sXB5Hck4JPhjUz6vf0RGERSR5pJN+6QE7YjMm5XuTHfVXSJO8DFLnb4JSp0CGGsBMzwXjkhJw9ZuopUcoAZHlc8H616PogAi4fJkdeqwv9yKWRmxDcnI6tQTGn6KXH3xKMp/ODhK4ielUDGFPGJ9pSY8SeNQjLo7Yw6gO4WLcMm0GUvhS2LNxdEcvdI5YUp66/kyZrgFghkFEI6CGXQfuG98FT7+J+sZowxYI/vknoN67X9ta6fSTU3F38pieo+PO05DAkhLbZBgy6AKlnIlosAKUbifyvQHc82pNh7ftQLxVznvciQhHAogJlBKkdHIwODdg/R72UuVez2sa8iqtsLJ9cLnhQBW1dKPlCV4KWWlDe1gZrAfRaQAYF/8a3HmX6BtILyOVr4L46BEwgvsAfakEU4ESApApI90p9AtLhBJGpDv6qTky3vJ9CkIAyQzGGiP4p3nvVIbmlhQYABUnNcYEqNI/DFUD8yJrrDPq19cbd170TM0C+nyGqsEZlZ29HZxikjSpInYC54EMtJsIN4Hl8IMafRd4LrwdDE+q/jp2cDPEPvgNQPVCMJweUJ5kUFK/W51KKoWO5jAcCdxPRafVPXViouwUIWiqapK+JXEHcVLaYDMwYAHsrDdWlG1gU+8ur9lGnrvyo3zGsNL8eJb30o5JskskKgRtejjqfg3rc0AzCJZpgup9ETi/dw84s/P1wJaIQWzly2BVPAlG6ACgNwUUpdA28+Kr1gO1qS89YQbuDyiUZNQSIEmd3ygh2eO8FhH+rIrjgOnJKO5gPjnoe+i237qqASpNgtexqMJSZZWg5gGck6Tu4Dp0pv0Pre5lHFCYICONYGX1A2P0LHAPKQKMC2l010qIfvg/wLcuA4fLB+BOBSWsY425LdZMxtL83lCifDmlYS8psV+Hm6koMowmkoQgAo9FperotsbOn9a3D5Z+DVKe8J74a7/txfVriXkE4FL1r6X/5t3bcid1S4ILQlHC1ON1GBYXwmAjCMML6nv3gfumd8Fz7lWaeVbwIIQWFYP58hRw7FgB6EsDxQ1Q6hvMOxLcCsnEvrAkACEhOrVnjE+0zXCHQKkwT0DAkVRGgkjxSceATtZM+5bEvDAxjhw9odS2wy+HgoIC98B08aQBFuXHAASrk7iEGnUhRQ6/HowZ/wQfqawnDYS0ILzqdYg8/wOAfz+tc13l8oNdhjj+6vWwFEEhC+8Lp4fps5LSU+tyQlFUnAFG7a92bOziUzlByy6XwSk6rTwOwLoQr3uqGns/Wra1ST90GwxMS3/M6l/0mjuko5oRDEtBnfgq0gySu0D1nwjOUbeB0WWI3apFTmL7v8Fc8gTglqXAHQ5QDs9Rdu5ERO/BZwDbF+a7Lnwtr/fmzYuiiRjERKRCKUXFlQpqO22gO1SihWtTiU4dIPOH3fAnOpspLki4BBrvjzEX395n2oAsnBGNWBZEm7hlRkH0mwjGtW+At3AeuLoMoZdpRQ9sFIE3blPW/CLg25YB8yaDMtwJMU/PF1+0UOoQMa9lb9npOhGqAVEQJ3PH3+6SauFeYiDTCPCpc1DyJVJI1c2nfgaQ/xyUUP/JqRemqBt1ZqVZ/rPhF56bUfcCNB8SEebjrP+l4Bh5E/Aeo6TDFjgGzdsZq3yJOSpfB2w6CJazAwBz2eraFqLEB3WryIGWZ0+EgSdkQrz7iHig/vT8H69MPqcnGZdNZH8S1UEGwMJRaWUnY85nsxtvJylcfAop1ClfOYg3pne7eKxvy0KvQzqCg65Gz/S/o++ql8HdY5Ry0NCxWiO8+GG255kf7qr+25MLPtlmTq9nmbtcBgkdWca2EdrbQsEy5U79QUliSNVxJZCq8vF2Lly+fPnjzY31n1TedOneQ3f32d1TxRJGAxUoy+MER5SiNoX+1sWp415PnroU1Du39Mof0cP/XvKQqdwa/GPZofMg/TB6d2HjVtzz5fs1Df9+9YPaL5cv/O2/YXlFHQ8AbIe19/Yc2jkJZ6FFetueHQIIEWV81br35lRknIh5xcXF3qlTp/4jEAi8ccGES98kYQyZfdaZpm4rPqUD4aiE18OM/QG+e80+deslczYv1NJ1IjjryCMwtWDdlrBx9VOKXThLugAYvUlz9xfCtf4vfGXFh6+OfHTt9Xatwk7M1NM9XUsauopYYMdWe4y2E/k30vpDJqvWHwzISkiK2QmYl3bLLbd8bhjGZ+edd96c9WVlTjKHVfWOmsaIihlMhxrqhNU3JtHjdhqbGoy/P77eff4lc7YtpKCYEGXKaU+0W4jAAqUETvsEqup3bKrCWCMLrXlDhhZcBeZLkxV8+TLIYMNKZNxULxW4ywql3oK9pGGzoJgxbLJdcSixbfVqyvUR+OGosnY1yI30WcmJgN8TSSAxjzEm77zzzrRZs2atiEQim3Jycu7/4osvHAOHDdNyN3NBVe34X/Xclskhz6TKJhy9UNoM6Hcz3hDhkY21/L4LflfzFNWCVTFoIMC+6ohaHN9Il4whG2mFaz75EF+ZMFhu/0o6kDPh8iJ6UqBjspqopHgGplfEiq6z8cCyKnucmML9ET1Lm1FqKh3gwSjufHJd6naM7wRI5EbbtsTbVSdOnOi9//77F7nd7owpU6YUElPz8/N1IUXaG1OEKXClxn6OATOVUsrrYmxP0Fnx+kb3IGIefa47hkrBKr7mO1kf33/+6I0lA+5/89be52qrfRxJLK+ybeSug4cXRvfvAMOXzKTHrxMFGTPBzdXgSZPyvUjlkPgLLOzfgiCajVGL1EgDA21wJEqCwSFqwerKykoz/qwJSyAtQlfia2trX09PTz+/srJyyqeffhpesmSJ0QJpt3SINlmsApSaBso6kpDaDUMM19bhp4+sSZ5228CAZ9nsvpf7ucp1GHxwkkPluWVtb68KpPhTksAQjh+BUsNgwDclkQpOFDkVFZ2/YlBG5dYufisnbOrOAxazQCVx6Hxj1uG8dwBWqWJd4lQtWEWT5JagPpk2NtzFjxeAphize9dP0A17XAZSrw8xr7q6+tEuXbpcVl9f/8WwYcPeitvDI8HUkngxu/qwf2lPf5Pl4WhQ81R8pwqLWgoy3bLXM6MaqtwO9Huc1DRtAphBfSZCNLkbmN0vlZH8aWaOOnzusrprfo1FdcUtON9Rqyop4OXl5bGSe3uVZzv4PRDfAUCIXZIHjU6pjBrPV9kg7ddARTCs4vX+Nha+EPnhkJRbArjY/jQB8KOFgcSkFStWXNa7d+97SC0bGhresBPOI9ijJp2b6ph69eYd9+esS07GoWZUF9iZXUFj0MkPmVJEwYqEIRqyRNjXSUH3McD7T0Le60Lm9XekMQmsFEOmFT/wt4Z7P8bSiqW0mQbLWx8SYT/Aukb1alefmu1G4DaH7QTSb1iDW9eS41gspHlQMbSNcxsYKF0OZHXNrPqK57Zq+C1uHhIiNnfu3Iy+ffs+xznXkX0sFtvLOVebNm2i7szWW6EQ5uUbqrgYA+haiE4HkNPRmb8ZAwg3QrC5UYVYkrL6TAD84TPcffOHhu/qlw3PkB9xl7+jVni6PNa4C92yGUfmZbxWfHV+BpSVH7WPV3vjYmBXPbd1/YEwLnW59eZDrdpkrrxc9tUXxmNKXS/WVUPuc3K99TDhjksaEDmDxhhSB6og6W8D/8EYPXr0HSkpKZ3JidEa0tLSrpVSzu/Tp49u59fHQtikKL0CqIQ5I+Clzhel3uMy0GkZSQpTeqDMHgKO3LHIe1wAPDn7KO9Ab0ZIE6ztn4G5phyg5n2GTftF1/SU7Km9Dr2OqMapsiIsgXKaTTNlSVwD9gXZ73umwFiOFgjqgZEKGMdzWpdbW8jBWCePg0HMtKjcmRAjOAILRhRsPWT8rbUTS5iBKSkp12k3JKWDMaY6d+48dteuXR9u3br1kffee2/Vo48+2hRv7eKFBQWeKTffnNH1nJxe0eDyg0ndcrqKtFzJk7shcyUdYdrXhSEAs24TxL76J6jqdwH3rAVDREERqOlP5cGwZfVOY99ffU/eHCyquZnsIW2hoFvHltoSN2xYyrt/n9Cw8Zwk1icQU+QjmAtVRn4+eeLKkDbDuvWkAvyuWG9O3VrmCfdgH0UKQLgdnO0K4KrJ8zZ9HlffNrUtG6mpqdnx1tUWUZPZ2dnfp5/BgwcfnD179iEppckYc3LO/YZhpPr9fhfAcC1Yhm4msJlli4MA68BmEFuXgVXzAajdXwAPHQJuOEFRDQJ9NkKiURI0wiHTGpKlZn7xi9xaLK34jaL9cfEtXktKCozKygqzdkzuY+ckwwuoLA0Scsb8UwYLX2UlhPTE5fHeRQOHtZRDE8TpFHDAA1E+Xy8/kdrNsQxsbm62XC5KwcGUks6xsfFQYmhKSkoGANDP8YjZ7AKlQgfR2rsBxI5PQW77BGBfFWCkHjhzABIe50vVnUIaxCE0+OsHIPjfiEQsa2gGPrhsVk4Mn678bdwzU3ahpXD6GPO17AvZL7v6Wc8Y7esB5ekiw9TyVkdVw5JSkAS6utj2AurzSwSmo3TTxRXf38wOL671vq4Z3rpbNkFitbW1dwSDQRIeUmEiZEzvYDquDaGtT4cbG/fv2V+3cMsnZR+IsmkYeu770lpQBLD4ETB2fQaGMoF50wBcfkJ4yT7YzDsOkdETEnnMNMV3usKjX9zT914Ka4hx1HRJzUjzK3ZENjUbpcCpjm4Hyr4kO/i/dG8+J5G7b2DthVk+PCdi6tbjUzIQUQmHi2N9hL1CJ3pIKh20Y8uTce65585ZtGhRZb9+/WYkJSUN55xncs5pAxZYlkVS2WCa5r5YLFbT3Ny8/sCBA6v/MmfOV/PKyw9PBkifd1/WjlS/4Yk6PApdPo0fatg8QSAzzkS0JCPrL/Iz8JH1v+zTCXHTz+h5xhSXG3ZXw6Y/1/yyx897p7FBTc0gIhH73vx8uw9p673W3U4DIEjNn6foJ2hpuWsIYvTzPfC0PjAjwdz3GwyMB8wrAYB+4NZbb/VnZmbqL1988UWxe/fu8HEXsb7MiYOvrn9Qpf4h02PeEw2ZZKDaXSZlqFAoxsOxmDUgw5i15dc9855b7bhhbOnGPaq4v1OpKvOt25x39UgxP2JMBVcHoVkzdmalueinfa7slmperMudiWw7U0o4XdzYccjx8vRXarZcW1bIS9t5WBkF0tRKq9vGGWPi2WefDbS+QEeVUtL3Wi3Ky8tVYWGhLClBSwnAJ36sHs90qpsyfJgSpZTrdPYMo24HMYIhYeV0YONn58dWXtKj9+1YWvWmjpSh5uPqe3u8m+qEC5Mso4nixSd/PChnaFZgDiqhQcBTt+yAcjqQHQjyw5/vYaVkKkpK2id9es3fnODo2i8h0idcTJl9zNwnd/W5ZVRX89lQ2KJ64Rkp1gsFwu8EHlUO2NEMf16631E644Wvat6cmdcj1Wc+MObJrTc+fM3Q3Gm5TQuzvVbfQJR6ZRJAYZSyvF5ufLbb8YuRv9v02OkelYdn6mi7zfflLO+VLr8TCIt27948nqeks4m8HsbqAzy4L8LnVzU4/vjatmjzA+caE7r7Yr/J9IjMQBSo0SgRzyv8buRbD/E1vR7uNkwVVigsP70j8k5XWhTtICK9WbIfZqR68IskBxhRix789E8HssdADISU6OAwfelJ8tYsd+zm73bizZ39sWRhCQhEVUKSp1WXK2iMMPH5Qef1CBVWuR1pnNb5gmfkCCQVV4PFd+XcMqYLPBuOmLQP+rTOy/rGHLpqpoSBaND2oKhQQiqk8D/RnNf0eJyO5bVw96gntzx+0m7ZNtAZO0NKxWGptfflvjwoS1wbDNCJbXBGmajn0Wa6bWfTSCUtv89hVB0w/jbg0U2FNkJu78L872EgANIWBLy7u2PzNPZxr1R1QSBE58icrQ6wNpy/pU9BMr789af+0Qs+WEthGZkd9V91+BgCqJINoNjOHZEX1mdctifgWuv3oCGP28nz7RCdOejzcGNXE986f4156Wsfrg2WlBzZAPDfewAjloJ8/oaBHcd3C/8rO0n0D4ZO/wDGthK9OL+HG7UB3Lpwm/OiW+Zv3E4nv53ps6bP+BGgGD9u86YX1+9/ttLzvW2NfKXPzx2EItgn7549sg9K1jbS8vu4sbOJr/5LNRtztpjXMudZIRWXxI6DB/sWT2x+sV86u9KMmhCV7T/lI5E4z8EUc7kN3HQI3757WdL0tyvWNJ4t5hGdVeNUXAzsQbvPD1b8POeOvBT1SKpHeUMRQSEI7Q8+IxogFUg6CsLr4fxQBGKbDztKhz+26WENl53FE3yJzrp1Vy0nkyPIF67vO3BMF+vxHkniEo4KwlEphYZuEo/nWojMgW5mR4UeJ2MEm207jEs/3ee7a+oL6ypb+mzadSpPG+hbc4+Li8EYG4+9lszqPSU3Wfwi0ytHOKlPzZQQMfXmVnlkf1KrNugj+27oG5txzOVAJMtqmQj7wli5swkfH/W7rX/Rl56hIDkR+o/+ZwTv3547rmeKnNqBq3EpTtXJRX6aym+CWoSpDGffR0ing/SdfgGkvSRwOCoPNAv+0a6QenXME9PeByi1j7ErsfcTf1vP9B8J0FQhcP43ENo4AsDNF+dkXTWQj0r1qLFuJs93M9nNCapLB6eNDDVGmYoB32cJuTMs8MuGCFv8zibnssf/WbVPPwTp8l+/PalrTf8fS2sy2ZbGlIsAAAAASUVORK5CYII=" alt="FEDGE 2.O" style="width:90px;height:auto;margin-bottom:4px;filter:drop-shadow(0 0 12px rgba(124,58,237,.5));"/>
-    <div style="font-size:18px;font-weight:800;">Command Center Setup</div>
-    <div class="setup-sub">Enter your Anthropic API key once. It saves to your browser's localStorage — never leaves your device or goes to any server.</div>
+<header>
+  <img class="hdr-logo" id="hdr-logo" src="" alt="FEDGE 2.O"/>
+  <div class="hdr-divider"></div>
+  <div class="hdr-title">Command Center</div>
+  <div class="hdr-status">ONLINE</div>
+  <div class="hdr-date" id="hdr-date"></div>
+  <button class="hdr-tab active" onclick="showView('repo')" id="tab-repo">Command</button>
+  <button class="hdr-tab" onclick="showView('all')" id="tab-all">All Repos</button>
+</header>
 
-    <div class="setup-field">
-      <label>Anthropic API Key</label>
-      <input type="password" id="setup-key" placeholder="sk-ant-api03-..." autocomplete="off"/>
-      <small>Get yours at console.anthropic.com · Stored in localStorage only</small>
-    </div>
-
-    <div class="setup-field">
-      <label>GitHub Personal Access Token <span style="color:var(--muted);font-weight:400;">(optional)</span></label>
-      <input type="password" id="setup-gh" placeholder="ghp_..." autocomplete="off"/>
-      <small>Lets the command center read your repo stats live · needs repo scope</small>
-    </div>
-
-    <button class="btn-primary" onclick="saveSetup()">Launch Command Center →</button>
-    <div class="setup-note">Your API key is used to talk directly to Claude via the Anthropic API.<br>No third-party servers involved.</div>
+<aside>
+  <div class="side-sec">
+    <div class="side-lbl">Games — Live</div>
+    <button class="repo-btn active" data-id="trustfund" onclick="selectRepo('trustfund')"><div class="repo-dot" style="background:#f5c842;box-shadow:0 0 5px #f5c842"></div><div class="repo-info"><div class="repo-name">Trust Fund Tycoon</div><div class="repo-sub">fedge2-trust-fund-game</div></div><div class="repo-badge badge-live">Live</div></button>
+    <button class="repo-btn" data-id="credit" onclick="selectRepo('credit')"><div class="repo-dot" style="background:#a78bfa;box-shadow:0 0 5px #a78bfa"></div><div class="repo-info"><div class="repo-name">FEDGE Credit Game</div><div class="repo-sub">fedge-2-credit-game</div></div><div class="repo-badge badge-live">Live</div></button>
+    <button class="repo-btn" data-id="lockin" onclick="selectRepo('lockin')"><div class="repo-dot" style="background:#2dd4bf;box-shadow:0 0 5px #2dd4bf"></div><div class="repo-info"><div class="repo-name">Lock In</div><div class="repo-sub">lock-in-game</div></div><div class="repo-badge badge-live">Live</div></button>
+    <button class="repo-btn" data-id="genwealth" onclick="selectRepo('genwealth')"><div class="repo-dot" style="background:#4ade80;box-shadow:0 0 5px #4ade80"></div><div class="repo-info"><div class="repo-name">Generational Wealth</div><div class="repo-sub">generational-wealth-game</div></div><div class="repo-badge badge-live">Live</div></button>
+    <button class="repo-btn" data-id="worldstage" onclick="selectRepo('worldstage')"><div class="repo-dot" style="background:#f472b6;box-shadow:0 0 5px #f472b6"></div><div class="repo-info"><div class="repo-name">World Stage</div><div class="repo-sub">world-stage</div></div><div class="repo-badge badge-live">Live</div></button>
   </div>
+  <div class="side-sec">
+    <div class="side-lbl">In Development</div>
+    <button class="repo-btn" data-id="tradestreet" onclick="selectRepo('tradestreet')"><div class="repo-dot" style="background:#3b82f6"></div><div class="repo-info"><div class="repo-name">TradeStreet</div><div class="repo-sub">tradestreet-fedge</div></div><div class="repo-badge badge-dev">45%</div></button>
+    <button class="repo-btn" data-id="fellito" onclick="selectRepo('fellito')"><div class="repo-dot" style="background:#db2777"></div><div class="repo-info"><div class="repo-name">FELLITO Agent</div><div class="repo-sub">fellito-epic-ate-agent</div></div><div class="repo-badge badge-dev">70%</div></button>
+    <button class="repo-btn" data-id="ecrypto" onclick="selectRepo('ecrypto')"><div class="repo-dot" style="background:#059669"></div><div class="repo-info"><div class="repo-name">Eclatcrypto</div><div class="repo-sub">Eclatcrypto</div></div><div class="repo-badge badge-dev">Dev</div></button>
+    <button class="repo-btn" data-id="melao" onclick="selectRepo('melao')"><div class="repo-dot" style="background:#ea580c"></div><div class="repo-info"><div class="repo-name">Melao Studio</div><div class="repo-sub">melaos-studio</div></div><div class="repo-badge badge-dev">Dev</div></button>
+  </div>
+  <div class="side-sec">
+    <div class="side-lbl">Private</div>
+    <button class="repo-btn" data-id="fedge2o" onclick="selectRepo('fedge2o')"><div class="repo-dot" style="background:#7c3aed"></div><div class="repo-info"><div class="repo-name">FEDGE-2.O Core</div><div class="repo-sub">FEDGE-2.O (private)</div></div><div class="repo-badge badge-priv">Private</div></button>
+    <button class="repo-btn" data-id="license" onclick="selectRepo('license')"><div class="repo-dot" style="background:#6b7280"></div><div class="repo-info"><div class="repo-name">FEDGE License</div><div class="repo-sub">FEDGE-License (private)</div></div><div class="repo-badge badge-priv">Private</div></button>
+  </div>
+</aside>
+
+<main>
+  <div id="view-repo" style="display:flex;flex-direction:column;flex:1;min-height:0;">
+    <div class="kpi-row">
+      <div class="kpi"><div class="kpi-val" style="color:#4ade80">5</div><div class="kpi-lbl">Live Games</div></div>
+      <div class="kpi"><div class="kpi-val" style="color:#a78bfa">11</div><div class="kpi-lbl">Total Repos</div></div>
+      <div class="kpi"><div class="kpi-val" style="color:#f5c842" id="kpi-progress">--</div><div class="kpi-lbl">Progress</div></div>
+      <div class="kpi"><div class="kpi-val" style="color:#60a5fa">GH Pages</div><div class="kpi-lbl">Hosting</div></div>
+    </div>
+    <div class="repo-hero" id="repo-hero">
+      <div class="repo-av" id="hero-av"></div>
+      <div class="repo-hero-info"><div class="repo-hero-name" id="hero-name"></div><div class="repo-hero-desc" id="hero-desc"></div></div>
+      <div class="repo-hero-links" id="hero-links"></div>
+    </div>
+    <div class="panels" style="flex:1;min-height:0;">
+      <div class="panel" style="border-right:1px solid var(--b1);">
+        <div class="panel-title">Quick Actions — click to copy prompt</div>
+        <div class="action-grid" id="action-grid"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Repo Context</div>
+        <div id="ctx-panel"></div>
+      </div>
+    </div>
+  </div>
+  <div id="view-all">
+    <div class="all-section-title">Games — Live on GitHub Pages</div>
+    <div class="all-grid" id="all-games"></div>
+    <div class="all-section-title">In Development</div>
+    <div class="all-grid" id="all-dev"></div>
+    <div class="all-section-title">Private</div>
+    <div class="all-grid" id="all-private"></div>
+  </div>
+</main>
 </div>
 
-<!-- ── MAIN APP ───────────────────────────────────────────── -->
-<div id="app" class="hidden">
-
-  <!-- HEADER -->
-  <header>
-    <img src="data:image/png;base64,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" alt="FEDGE" style="height:30px;width:auto;filter:drop-shadow(0 0 8px rgba(124,58,237,.4));"/>
-    <div class="hdr-sep"></div>
-    <div class="hdr-status">ONLINE</div>
-    <div class="hdr-model" id="hdr-model">claude-sonnet-4-6</div>
-    <div class="hdr-time" id="hdr-time">--:--:--</div>
-    <div class="hdr-actions">
-      <button class="hdr-btn" onclick="newChat()">+ New Chat</button>
-      <button class="hdr-btn" onclick="clearKeys()">⚙ Setup</button>
-    </div>
-  </header>
-
-  <!-- SIDEBAR -->
-  <aside>
-
-    <!-- KPI STRIP -->
-    <div style="padding:14px 14px 6px;">
-      <div class="side-label">HQ Status</div>
-    </div>
-    <div class="kpi-strip">
-      <div class="kpi-card"><div class="kpi-val" style="color:#4ade80" id="kpi-repos">6</div><div class="kpi-label">Live Repos</div></div>
-      <div class="kpi-card"><div class="kpi-val" style="color:#a78bfa" id="kpi-msgs">0</div><div class="kpi-label">Messages</div></div>
-    </div>
-
-    <!-- REPOS -->
-    <div class="side-section">
-      <div class="side-label">Game Repos</div>
-
-      <div class="repo-item active" onclick="selectRepo('trustfund')" data-repo="trustfund">
-        <div class="repo-dot" style="background:#f5c842;box-shadow:0 0 5px #f5c842"></div>
-        <div class="repo-info">
-          <div class="repo-name">Trust Fund Tycoon</div>
-          <div class="repo-tag">fedge2-trust-fund-game</div>
-        </div>
-        <div class="repo-pill live">Live</div>
-      </div>
-
-      <div class="repo-item" onclick="selectRepo('credit')" data-repo="credit">
-        <div class="repo-dot" style="background:#a78bfa;box-shadow:0 0 5px #a78bfa"></div>
-        <div class="repo-info">
-          <div class="repo-name">FEDGE Credit Game</div>
-          <div class="repo-tag">fedge-2-credit-game</div>
-        </div>
-        <div class="repo-pill live">Live</div>
-      </div>
-
-      <div class="repo-item" onclick="selectRepo('lockin')" data-repo="lockin">
-        <div class="repo-dot" style="background:#2dd4bf;box-shadow:0 0 5px #2dd4bf"></div>
-        <div class="repo-info">
-          <div class="repo-name">Lock In</div>
-          <div class="repo-tag">lock-in-game</div>
-        </div>
-        <div class="repo-pill live">Live</div>
-      </div>
-
-      <div class="repo-item" onclick="selectRepo('genwealth')" data-repo="genwealth">
-        <div class="repo-dot" style="background:#4ade80;box-shadow:0 0 5px #4ade80"></div>
-        <div class="repo-info">
-          <div class="repo-name">Generational Wealth</div>
-          <div class="repo-tag">generational-wealth-game</div>
-        </div>
-        <div class="repo-pill live">Live</div>
-      </div>
-
-      <div class="repo-item" onclick="selectRepo('worldstage')" data-repo="worldstage">
-        <div class="repo-dot" style="background:#f472b6;box-shadow:0 0 5px #f472b6"></div>
-        <div class="repo-info">
-          <div class="repo-name">World Stage</div>
-          <div class="repo-tag">world-stage</div>
-        </div>
-        <div class="repo-pill live">Live</div>
-      </div>
-
-      <div class="repo-item" onclick="selectRepo('hq')" data-repo="hq">
-        <div class="repo-dot" style="background:#60a5fa;box-shadow:0 0 5px #60a5fa"></div>
-        <div class="repo-info">
-          <div class="repo-name">FEDGE HQ</div>
-          <div class="repo-tag">fedge-hq-command-game</div>
-        </div>
-        <div class="repo-pill live">Live</div>
-      </div>
-    </div>
-
-    <div class="side-section">
-      <div class="side-label">Other Repos</div>
-
-      <div class="repo-item" onclick="selectRepo('tradestreet')" data-repo="tradestreet">
-        <div class="repo-dot" style="background:#3b82f6"></div>
-        <div class="repo-info">
-          <div class="repo-name">TradeStreet</div>
-          <div class="repo-tag">tradestreet-fedge</div>
-        </div>
-        <div class="repo-pill dev">Dev</div>
-      </div>
-
-      <div class="repo-item" onclick="selectRepo('ecrypto')" data-repo="ecrypto">
-        <div class="repo-dot" style="background:#059669"></div>
-        <div class="repo-info">
-          <div class="repo-name">Eclatcrypto</div>
-          <div class="repo-tag">Eclatcrypto</div>
-        </div>
-        <div class="repo-pill dev">Dev</div>
-      </div>
-
-      <div class="repo-item" onclick="selectRepo('melao')" data-repo="melao">
-        <div class="repo-dot" style="background:#ea580c"></div>
-        <div class="repo-info">
-          <div class="repo-name">Melao Studio</div>
-          <div class="repo-tag">melaos-studio</div>
-        </div>
-        <div class="repo-pill dev">Dev</div>
-      </div>
-
-      <div class="repo-item" onclick="selectRepo('fellito')" data-repo="fellito">
-        <div class="repo-dot" style="background:#db2777"></div>
-        <div class="repo-info">
-          <div class="repo-name">FELLITO Agent</div>
-          <div class="repo-tag">fellito-epic-ate-agent</div>
-        </div>
-        <div class="repo-pill dev">Dev</div>
-      </div>
-    </div>
-
-    <!-- QUICK ACTIONS -->
-    <div class="side-section">
-      <div class="side-label">Quick Ask</div>
-      <button class="qa-btn" onclick="quickAsk('Give me a full status update on all my game repos and what needs attention.')"><span class="qa-icon">📊</span> Status of all repos</button>
-      <button class="qa-btn" onclick="quickAsk('What should I work on next across my Eclat Universe projects?')"><span class="qa-icon">🎯</span> What to work on next</button>
-      <button class="qa-btn" onclick="quickAsk('Review the FEDGE game ecosystem and suggest improvements for user engagement.')"><span class="qa-icon">🎮</span> Game improvement ideas</button>
-      <button class="qa-btn" onclick="quickAsk('Help me write a tweet thread announcing all 6 FEDGE games are live on GitHub Pages.')"><span class="qa-icon">📢</span> Draft announcement</button>
-      <button class="qa-btn" onclick="quickAsk('What is the best next feature to add to the Trust Fund Tycoon game?')"><span class="qa-icon">💡</span> Next Trust Fund feature</button>
-      <button class="qa-btn" onclick="quickAsk('How should I market Eclat Universe games to grow my audience?')"><span class="qa-icon">🚀</span> Marketing strategy</button>
-    </div>
-
-    <!-- PROJECT PROGRESS -->
-    <div class="side-section" style="padding-bottom:20px;">
-      <div class="side-label">Project Progress</div>
-      <div class="prog-row">
-        <div class="prog-head"><span class="prog-name">Trust Fund Tycoon</span><span class="prog-val">95%</span></div>
-        <div class="prog-track"><div class="prog-fill" style="width:95%;background:#f5c842"></div></div>
-      </div>
-      <div class="prog-row">
-        <div class="prog-head"><span class="prog-name">Credit Game</span><span class="prog-val">90%</span></div>
-        <div class="prog-track"><div class="prog-fill" style="width:90%;background:#a78bfa"></div></div>
-      </div>
-      <div class="prog-row">
-        <div class="prog-head"><span class="prog-name">Lock In</span><span class="prog-val">88%</span></div>
-        <div class="prog-track"><div class="prog-fill" style="width:88%;background:#2dd4bf"></div></div>
-      </div>
-      <div class="prog-row">
-        <div class="prog-head"><span class="prog-name">Generational Wealth</span><span class="prog-val">85%</span></div>
-        <div class="prog-track"><div class="prog-fill" style="width:85%;background:#4ade80"></div></div>
-      </div>
-      <div class="prog-row">
-        <div class="prog-head"><span class="prog-name">World Stage</span><span class="prog-val">92%</span></div>
-        <div class="prog-track"><div class="prog-fill" style="width:92%;background:#f472b6"></div></div>
-      </div>
-      <div class="prog-row">
-        <div class="prog-head"><span class="prog-name">TradeStreet</span><span class="prog-val">45%</span></div>
-        <div class="prog-track"><div class="prog-fill" style="width:45%;background:#3b82f6"></div></div>
-      </div>
-      <div class="prog-row">
-        <div class="prog-head"><span class="prog-name">FELLITO Agent</span><span class="prog-val">70%</span></div>
-        <div class="prog-track"><div class="prog-fill" style="width:70%;background:#db2777"></div></div>
-      </div>
-    </div>
-
-  </aside>
-
-  <!-- MAIN CHAT AREA -->
-  <main>
-
-    <!-- REPO DETAIL PANEL -->
-    <div id="repo-panel">
-      <div class="rp-avatar" id="rp-avatar">F2</div>
-      <div class="rp-info">
-        <div class="rp-name" id="rp-name">FEDGE HQ</div>
-        <div class="rp-desc" id="rp-desc">fedge-hq-command-game · GitHub Pages</div>
-      </div>
-      <div class="rp-actions">
-        <a class="rp-btn" id="rp-github" href="#" target="_blank" rel="noreferrer">⎇ GitHub</a>
-        <a class="rp-btn" id="rp-live" href="#" target="_blank" rel="noreferrer">🌐 Live</a>
-        <button class="rp-btn primary" onclick="askAboutRepo()">Ask Claude →</button>
-      </div>
-    </div>
-
-    <!-- CHAT SCROLL -->
-    <div id="chat-scroll">
-      <div class="empty-state" id="empty-state">
-        <img src="data:image/png;base64,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" alt="FEDGE 2.O" style="width:72px;height:auto;filter:drop-shadow(0 0 16px rgba(124,58,237,.5));"/>
-        <div style="font-size:15px;font-weight:800;margin-top:4px;">Command Center</div>
-        <div class="empty-sub">Your personal ops hub. Ask me anything about your repos, games, strategy, code, marketing — whatever you need. I know the whole Eclat Universe stack.</div>
-        <div class="suggestions">
-          <div class="suggest-chip" onclick="quickAsk('What are all my live game URLs?')">🌐 All live game URLs</div>
-          <div class="suggest-chip" onclick="quickAsk('What should I focus on to grow Eclat Universe this week?')">📈 This week\'s focus</div>
-          <div class="suggest-chip" onclick="quickAsk('Give me new feature ideas for the Trust Fund Tycoon game.')">💡 Trust Fund ideas</div>
-          <div class="suggest-chip" onclick="quickAsk('How do I drive more traffic to my GitHub Pages games?')">🚀 Drive traffic</div>
-          <div class="suggest-chip" onclick="quickAsk('Write a bio for Fellito R. Rodriguez for social media.')">✍️ Write my bio</div>
-          <div class="suggest-chip" onclick="quickAsk('What is the FEDGE 2.O brand and how should I position it?')">💎 Brand positioning</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- INPUT BAR -->
-    <div class="chat-input-wrap">
-      <div class="chat-input-row">
-        <textarea id="chat-input" placeholder="Ask me anything about your repos, games, strategy, or code..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
-        <button id="chat-send" onclick="sendMessage()" title="Send (Enter)">➤</button>
-      </div>
-      <div class="input-footer">
-        <div class="input-hint">Enter to send · Shift+Enter for new line</div>
-        <div class="input-hint" id="ctx-count">0 messages in context</div>
-      </div>
-    </div>
-  </main>
-
-</div>
+<div id="toast"><span id="toast-icon">✅</span><span id="toast-msg">Prompt copied — paste it in Claude Code</span></div>
 
 <script>
-// ── REPOS DATA ─────────────────────────────────────────────────────────────
 const REPOS = {
-  trustfund:   { name:'Trust Fund Tycoon',   repo:'fedge2-trust-fund-game',           github:'https://github.com/cryptofedge/fedge2-trust-fund-game',          live:'https://cryptofedge.github.io/fedge2-trust-fund-game/',    color:'#f5c842', avatar:'TF', desc:'$100K inheritance, 10 market events, 4 investment styles, Marcus Wells NPC, Three.js + Phaser + FEDGE chatbot' },
-  credit:      { name:'FEDGE Credit Game',   repo:'fedge-2-credit-game',              github:'https://github.com/cryptofedge/fedge-2-credit-game',              live:'https://cryptofedge.github.io/fedge-2-credit-game/demo.html', color:'#a78bfa', avatar:'CG', desc:'FICO education game, credit tiers 1-3, Three.js score orb, Phaser mini-games, branch: root' },
-  lockin:      { name:'Lock In',             repo:'lock-in-game',                     github:'https://github.com/cryptofedge/lock-in-game',                    live:'https://cryptofedge.github.io/lock-in-game/',              color:'#2dd4bf', avatar:'LI', desc:'Mental health RPG, OG Ray NPC, vibe meter, Focus Flow Phaser mini-game, Three.js neural mindscape' },
-  genwealth:   { name:'Generational Wealth', repo:'generational-wealth-game',         github:'https://github.com/cryptofedge/generational-wealth-game',         live:'https://cryptofedge.github.io/generational-wealth-game/docs/', color:'#4ade80', avatar:'GW', desc:'IBC Infinite Banking Concept simulator, 43 year career, Three.js gold vault, Phaser IBC Race, legacy scoring' },
-  worldstage:  { name:'World Stage',         repo:'world-stage',                      github:'https://github.com/cryptofedge/world-stage',                     live:'https://cryptofedge.github.io/world-stage/world-stage-v2.html', color:'#f472b6', avatar:'WS', desc:'Music industry RPG, 4 NPCs (Keisha/DrizzyGhost/Izzy/Big Lou), 10 industry events, album drops, PRO registration, Three.js city + Phaser 4 mini-games' },
-  hq:          { name:'FEDGE HQ Command',    repo:'fedge-hq-command-game',            github:'https://github.com/cryptofedge/fedge-hq-command-game',           live:'https://cryptofedge.github.io/fedge-hq-command-game/', color:'#60a5fa', avatar:'HQ', desc:'Business command center, 9 AI agents, mission deck, Sprint Challenge Phaser game, Three.js holographic orbit' },
-  tradestreet: { name:'TradeStreet',         repo:'tradestreet-fedge',                github:'https://github.com/cryptofedge/tradestreet-fedge',               live:'',                                                         color:'#3b82f6', avatar:'TS', desc:'Trading dashboard, TypeScript + React Native stack, market data layer — 45% complete' },
-  ecrypto:     { name:'Eclatcrypto',         repo:'Eclatcrypto',                      github:'https://github.com/cryptofedge/Eclatcrypto',                     live:'',                                                         color:'#059669', avatar:'EC', desc:'Solana/DeFi layer for FEDGE ecosystem, FDG token, web3 integrations' },
-  melao:       { name:'Melao Studio',        repo:'melaos-studio',                    github:'https://github.com/cryptofedge/melaos-studio',                   live:'',                                                         color:'#ea580c', avatar:'MS', desc:'Music studio workspace, Suno prompt engine, 47 tracks generated, creative pipeline' },
-  fellito:     { name:'FELLITO Agent',       repo:'fellito-epic-ate-agent',           github:'https://github.com/cryptofedge/fellito-epic-ate-agent',          live:'',                                                         color:'#db2777', avatar:'FE', desc:'Epic EHR ATE Go-Live AI agent, React Native + Expo + Claude Sonnet 4.6 + ElevenLabs, PHI guardrail, RAG engine' },
+trustfund:{name:'Trust Fund Tycoon',repo:'fedge2-trust-fund-game',github:'https://github.com/cryptofedge/fedge2-trust-fund-game',live:'https://cryptofedge.github.io/fedge2-trust-fund-game/',color:'#f5c842',avatar:'TF',progress:95,status:'live',desc:'$100K inheritance, 10 market events, Marcus Wells NPC advisor, Three.js + Phaser Market Dash, FEDGE 2.O chatbot',tech:['Three.js r165','Phaser 3.80.1','GitHub Pages','Single-file HTML'],branch:'main',path:'docs/index.html',actions:[
+{icon:'🎮',title:'Add a new market event',desc:'Design a new event with 3 decisions and Marcus reactions',prompt:'I want to add a new market event to Trust Fund Tycoon (fedge2-trust-fund-game/docs/index.html).\n\nThe game has 10 existing market events: bull market, crash, Fed rate hike, crypto winter, real estate boom, AI boom, inflation, dividends, recession, IPO.\n\nPlease create a NEW market event with:\n- A unique market scenario\n- 3 player decisions (one should be the SMART PLAY)\n- Marcus Wells advisor dialogue: scene narrative, pre-event line, and post-decision reactions for all 3 choices\n- XP values and portfolio delta ranges for each decision\n\nThen add it to the MARCUS_SCENES data object and the EVENTS array in the game file. Walk me through the exact code changes.'},
+{icon:'🏆',title:'Improve the results screen',desc:'Make end-game results more cinematic',prompt:'I want to upgrade the results/end-game screen in Trust Fund Tycoon (fedge2-trust-fund-game/docs/index.html).\n\nCurrently: final portfolio value, grade (S+/A/B/C/D), XP total.\n\nUpgrades:\n- Animated grade reveal with Three.js particles\n- Breakdown showing best/worst decisions\n- Marcus Wells final quote based on performance\n- Share button that generates a text summary\n- Visual of portfolio growth over 10 rounds\n\nAudit the current showResults() function and implement these improvements.'},
+{icon:'💰',title:'Add a new investment style',desc:'Create a 5th style option at game start',prompt:'I want to add a 5th investment style to Trust Fund Tycoon (fedge2-trust-fund-game/docs/index.html).\n\nExisting 4 styles: Aggressive, Balanced, Conservative, Crypto Degen.\n\nDesign a new style -- "Real Estate Baron" (heavy REIT focus) or "IBC Master" (policy/bonds hybrid):\n- Name, emoji, tagline, starting allocation percentages\n- How it performs across different event types\n- Add it to the STYLES array and style selection UI\n\nWalk me through the exact code changes.'},
+{icon:'📱',title:'Mobile optimization',desc:'Fix layout and touch targets for phones',prompt:'I want to audit and fix the mobile experience for Trust Fund Tycoon (fedge2-trust-fund-game/docs/index.html).\n\nReview for:\n- Touch target sizes (buttons min 44px tall)\n- Text readability on small screens\n- Marcus Wells NPC panel layout on mobile\n- FEDGE 2.O chatbot sheet on mobile\n- Decision card layout under 400px wide\n- Three.js canvas performance on mobile\n\nIdentify and implement the specific CSS changes.'},
+{icon:'🚀',title:'Roadmap — what to build next',desc:'Strategic priorities for this game',prompt:'Give me a strategic roadmap for Trust Fund Tycoon (fedge2-trust-fund-game).\n\nCurrent state:\n- 10 market events with Marcus Wells NPC advisor\n- 4 investment styles, 10 rounds, $100K start, grade system S+/A/B/C/D\n- Three.js: particle starfield, spinning coin, portfolio bars\n- Phaser: Market Dash (20s, combo multiplier)\n- FEDGE 2.O chatbot\n- Live: https://cryptofedge.github.io/fedge2-trust-fund-game/\n\nTop 5 highest-impact features to add next? Focus on engagement, replayability, educational value, and Eclat Universe brand fit.'},
+{icon:'📢',title:'Write social post for this game',desc:'Tweet thread or Instagram caption',prompt:'Write a tweet thread (5-7 tweets) announcing Trust Fund Tycoon.\n\nContext:\n- I am Fellito R. Rodriguez, founder of Eclat Universe (NYC/Nigerian energy, 13yr Epic EHR consultant)\n- Game: start with $100K inheritance, navigate 10 real market events (bull runs, crashes, Fed hikes, AI booms, recessions, IPOs)\n- Features Marcus Wells -- street-wise Wall Street advisor who coaches every decision\n- Live: https://cryptofedge.github.io/fedge2-trust-fund-game/\n- Target: financial literacy community, crypto Twitter, young professionals\n\nMake it authentic to my voice: direct, no fluff, NYC swagger.'}
+]},
+credit:{name:'FEDGE Credit Game',repo:'fedge-2-credit-game',github:'https://github.com/cryptofedge/fedge-2-credit-game',live:'https://cryptofedge.github.io/fedge-2-credit-game/demo.html',color:'#a78bfa',avatar:'CG',progress:90,status:'live',desc:'FICO education game, credit tiers 1-3 (personal to business to corporate), Three.js score visuals, Phaser payment mini-games',tech:['Three.js r165','Phaser 3.80.1','GitHub Pages','branch: root'],branch:'root',path:'demo.html',actions:[
+{icon:'📊',title:'Add Credit Tier 3 content',desc:'Corporate credit: Amex Business, Chase lines',prompt:'I want to expand Credit Tier 3 content in the FEDGE Credit Game (fedge-2-credit-game/demo.html, branch: root).\n\nAdd Tier 3 (corporate credit) scenarios:\n- Amex Business Platinum application flow\n- Chase Business Unlimited scenario\n- $50K+ credit line strategies\n- EIN-only credit building (no personal guarantee)\n- Net-30 vendor accounts (Uline, Quill, Home Depot Pro)\n\nAdd these as new game scenarios with decision cards. Walk me through the specific code changes.'},
+{icon:'🎮',title:'New Phaser mini-game',desc:'Design a credit score simulation mini-game',prompt:'Design a new Phaser 3 mini-game for the FEDGE Credit Game (fedge-2-credit-game/demo.html).\n\nExisting mini-games: Payment Mini-Game (tap bills on time), Utilization Game (keep balances in green zone).\n\nI want a third mini-game teaching credit score factors:\n- "Score Builder" -- incoming credit decisions fall from top, route GOOD or BAD\n- "Inquiry Shield" -- protect score from hard pull attacks\n\nDesign the best option, write the Phaser 3 SceneClass, and integrate into the existing _pLaunch/_pClose pattern.'},
+{icon:'🏦',title:'Add business credit NPC',desc:'A credit advisor character like Marcus Wells',prompt:'I want to add a business credit advisor NPC to the FEDGE Credit Game (fedge-2-credit-game/demo.html).\n\nLike Marcus Wells in Trust Fund Tycoon but for credit. Maybe "Victoria Chase" (corporate credit specialist):\n- Appears before key credit decisions\n- Reacts to choices (smart vs risky vs damaging)\n- Unique dialogue for each credit scenario type\n\nDesign the character, write dialogue for 5 main credit scenarios, implement following the Marcus Wells NPC pattern from Trust Fund Tycoon.'},
+{icon:'🚀',title:'Roadmap for Credit Game',desc:'Top priorities next',prompt:'Give me a strategic roadmap for the FEDGE Credit Game (fedge-2-credit-game, branch: root).\n\nCurrent state:\n- FICO education scenarios, credit tiers 1-3\n- Three.js: CreditCard3D, ScoreOrb3D, FICOChart3D\n- Phaser: Payment Mini-Game, Utilization Game\n- FEDGE 2.O chatbot\n- Live: https://cryptofedge.github.io/fedge-2-credit-game/demo.html\n\nTop 5 highest-impact features to add?'},
+{icon:'📢',title:'Social post for Credit Game',desc:'Announce to your audience',prompt:'Write Instagram caption + tweet thread announcing the FEDGE Credit Game.\n\nContext:\n- I am Fellito R. Rodriguez, Eclat Universe founder, NYC/Nigerian energy\n- Game teaches: FICO scores, utilization, credit tiers, hard pulls, business credit\n- Goes from personal (Tier 1) to business (Tier 2) to corporate credit lines (Tier 3)\n- Live: https://cryptofedge.github.io/fedge-2-credit-game/demo.html\n\nVoice: direct, real, NYC swagger, not corporate.'}
+]},
+lockin:{name:'Lock In',repo:'lock-in-game',github:'https://github.com/cryptofedge/lock-in-game',live:'https://cryptofedge.github.io/lock-in-game/',color:'#2dd4bf',avatar:'LI',progress:88,status:'live',desc:'Mental health RPG, 8 scenarios, OG Ray NPC advisor, vibe meter 0-100, Focus Flow Phaser warm-up, Three.js neural mindscape',tech:['Three.js r165','Phaser 3.80.1','GitHub Pages','Single-file HTML'],branch:'main',path:'index.html',actions:[
+{icon:'🧠',title:'Add 3 new scenarios',desc:'Expand beyond the 8 existing scenarios',prompt:'I want to add 3 new scenarios to Lock In (lock-in-game/index.html).\n\nExisting 8 scenarios: school drama, fake friends, peer pressure, social media beef, family conflict, temptation, loyalty test, self-doubt.\n\n3 new scenarios:\n1. Mental health -- anxiety attack, panic, overwhelm\n2. Work/hustle -- grinding vs burnout\n3. Relationships -- romantic pressure, heartbreak, moving on\n\nFor each: scene setup text, 3 decisions with vibe impact (+/- values), OG Ray pre-scenario line, OG Ray reaction per decision. Walk me through the code changes.'},
+{icon:'🔥',title:'Improve streak system',desc:'Make combos more visual and rewarding',prompt:'I want to upgrade the streak system in Lock In (lock-in-game/index.html).\n\nCurrent: consecutive good choices build a streak shown as a fire indicator.\n\nUpgrades:\n- Animated streak counter pulsing with each good choice\n- Milestones: 3-streak="Focused", 5-streak="Locked In", 7-streak="Unstoppable"\n- Breaking streak feels impactful (screen shake, vibe meter flash)\n- Streak bonus vibe points scaling with streak length\n- OG Ray says something special at milestone streaks\n\nImplement in the existing vibe/streak system. Specific JS and CSS changes.'},
+{icon:'💛',title:'Add unique ending screens',desc:'5 different endings based on vibe score',prompt:'I want to add unique ending screens to Lock In (lock-in-game/index.html) based on final vibe score.\n\n5 endings:\n- 90-100: "Locked In King/Queen" -- OG Ray is proud\n- 70-89: "Rising" -- solid, almost there\n- 50-69: "Finding Your Way" -- OG Ray encouraging\n- 30-49: "Slipping" -- honest talk from OG Ray\n- 0-29: "Rock Bottom" -- OG Ray does not sugarcoat it\n\nEach: unique title, color, OG Ray closing message, shareable summary card design.\n\nImplement in the existing showResults() function.'},
+{icon:'🚀',title:'Roadmap for Lock In',desc:'Strategic next moves',prompt:'Give me a strategic roadmap for Lock In (lock-in-game).\n\nCurrent state:\n- 8 real-life mental health scenarios\n- OG Ray NPC advisor\n- Vibe meter (0-100), streak system\n- Three.js: 38-node neural mindscape\n- Phaser: Focus Flow warm-up\n- FEDGE 2.O chatbot\n- Live: https://cryptofedge.github.io/lock-in-game/\n\nTop 5 features to prioritize? Focus on emotional impact, urban youth relevance, replayability, social sharing.'},
+{icon:'📢',title:'Announce Lock In',desc:'Social content for this game',prompt:'Write tweet thread and Instagram caption for Lock In.\n\nContext:\n- I am Fellito R. Rodriguez, Eclat Universe founder, NYC/Nigerian energy\n- Lock In: navigate real situations (fake friends, peer pressure, family conflict, social media beef) and make choices that affect your VIBE\n- OG Ray is your street-wise mentor who gives real talk\n- Not preachy -- realistic scenarios resonating with urban youth\n- Live: https://cryptofedge.github.io/lock-in-game/\n\nVoice: raw, real, no corporate speak.'}
+]},
+genwealth:{name:'Generational Wealth',repo:'generational-wealth-game',github:'https://github.com/cryptofedge/generational-wealth-game',live:'https://cryptofedge.github.io/generational-wealth-game/docs/',color:'#4ade80',avatar:'GW',progress:85,status:'live',desc:'IBC Infinite Banking Concept simulator, ages 22-65, 43-year career, whole life policy cash value, Three.js gold vault, Phaser IBC Race',tech:['Three.js r165','Phaser 3.80.1','GitHub Pages','docs/index.html'],branch:'main',path:'docs/index.html',actions:[
+{icon:'🏦',title:'Add death benefit calculator',desc:'Show legacy impact throughout the game',prompt:'I want to add a death benefit/legacy calculator to Generational Wealth (generational-wealth-game/docs/index.html).\n\nCurrent: IBC simulator ages 22-65, tracks cash value, loan balance, savings, Legacy Score at end.\n\nAdd:\n- Running death benefit calculation throughout (not just at end)\n- Visual comparison: IBC path vs traditional bank path side by side\n- "Legacy gap" -- how much more you pass to family with IBC\n- Results screen: detailed dollar breakdown of IBC advantage\n\nWalk me through the specific code changes.'},
+{icon:'📈',title:'Add 5 new life events',desc:'Expand beyond the current event library',prompt:'I want to add 5 new life events to Generational Wealth (generational-wealth-game/docs/index.html).\n\n5 new events:\n1. Divorce -- how IBC protects vs bank loans\n2. Kids college -- policy loan vs student loan debt\n3. Real estate investment -- IBC loan for down payment\n4. Startup funding -- use cash value as collateral\n5. Early retirement at 55 -- IBC income stream vs 401K penalties\n\nFor each: 3 decisions (IBC/bank/cash), financial impact values, XP, educational context. Walk me through adding to the EVENTS array.'},
+{icon:'💡',title:'Improve IBC education in-game',desc:'Deeper and clearer financial education',prompt:'I want to improve the IBC education layer in Generational Wealth (generational-wealth-game/docs/index.html).\n\nEnhancements:\n- IBC 101 tutorial overlay on first play\n- After each IBC decision: "Why this works" tooltip explaining mechanics\n- Running comparison chart: Traditional Path vs IBC Path\n- End screen: specific dollar amounts showing IBC advantage\n\nWalk me through implementing these educational enhancements.'},
+{icon:'🚀',title:'Roadmap for Generational Wealth',desc:'What to build next',prompt:'Give me a strategic roadmap for Generational Wealth (generational-wealth-game).\n\nCurrent state:\n- IBC simulator, ages 22-65, 43 life events\n- Tracks: salary, cash value, loan balance, savings, death benefit\n- Three.js: gold vault splash\n- Phaser: IBC Compound Race\n- FEDGE 2.O chatbot\n- Live: https://cryptofedge.github.io/generational-wealth-game/docs/\n\nTop 5 features? Focus on IBC education depth, emotional connection to generational wealth concept, shareability.'},
+{icon:'📢',title:'Social post for Generational Wealth',desc:'Announce to your audience',prompt:'Write a tweet thread announcing Generational Wealth -- my IBC finance game.\n\nContext:\n- I am Fellito R. Rodriguez, Eclat Universe founder, NYC/Nigerian energy\n- Game: simulate financial life from age 22-65 using Infinite Banking Concept\n- IBC = funding whole life insurance and borrowing against cash value instead of banks\n- Live: https://cryptofedge.github.io/generational-wealth-game/docs/\n\nVoice: real, educational but not boring, NYC energy.'}
+]},
+worldstage:{name:'World Stage',repo:'world-stage',github:'https://github.com/cryptofedge/world-stage',live:'https://cryptofedge.github.io/world-stage/world-stage-v2.html',color:'#f472b6',avatar:'WS',progress:92,status:'live',desc:'Music industry RPG, 7 tabs, 4 NPCs (Keisha T./DrizzyGhost/Izzy Chen/Big Lou), 10 industry events, album drops, PRO registration, 4 Phaser mini-games',tech:['Three.js r165','Phaser 3.80.1','GitHub Pages','world-stage-v2.html'],branch:'main',path:'world-stage-v2.html',actions:[
+{icon:'🎵',title:'Add a 5th NPC',desc:'New industry character with unique offers',prompt:'I want to add a 5th NPC to World Stage (world-stage/world-stage-v2.html).\n\nExisting 4 NPCs: Keisha T. (A&R), DrizzyGhost (rival), Izzy Chen (Spotify), Big Lou (promoter).\n\nDesign a 5th NPC -- brand deal exec, music lawyer, producer, or social media manager:\n- Distinct name, personality, and offer type\n- Appears randomly like existing NPCs\n- Offers depend on current stats\n- 3-4 unique dialogue lines\n\nDesign the character, define offers and stat thresholds, walk me through adding to the existing NPC system.\n\nNOTE: After pushing changes, always copy world-stage.html to world-stage-v2.html and push BOTH.'},
+{icon:'💿',title:'Improve the album drop',desc:'Make releasing music more cinematic',prompt:'I want to upgrade the album release experience in World Stage (world-stage/world-stage-v2.html).\n\nCurrent: collect 5 tracks, click DROP IT, confetti, stats boost, social feed post.\n\nUpgrades:\n- Album name input screen before dropping\n- Album art generator (5 gradient templates by genre)\n- Release day build-up animation\n- Streaming numbers appearing on screen\n- Chart position announcement\n- DrizzyGhost auto-responds to every drop\n\nWalk me through the specific code changes.\n\nNOTE: Push both world-stage.html and world-stage-v2.html.'},
+{icon:'🌍',title:'Add a world tour system',desc:'Book international venues and grow globally',prompt:'I want to add a world tour system to World Stage (world-stage/world-stage-v2.html).\n\nCurrent: Local Venue to Theater to Arena to Stadium to World Stage.\n\nExpand to international touring:\n- After reaching Arena, unlock Global Tour mode\n- 5 regions: North America, Europe, Africa, Latin America, Asia\n- Each region has venue tier and Reputation threshold\n- International shows earn bonus streams, following, Global Cred\n- Special regional events (Afrobeats festival Lagos, Latin festival Miami)\n\nWalk me through designing and implementing this.\n\nNOTE: Push both world-stage.html and world-stage-v2.html.'},
+{icon:'🚀',title:'Roadmap for World Stage',desc:'Strategic next moves',prompt:'Give me a strategic roadmap for World Stage (world-stage).\n\nCurrent state:\n- Music industry RPG: 7 tabs (Career/World/Drip/PRO/Venues/Feed/Learn)\n- 4 NPCs: Keisha T., DrizzyGhost, Izzy Chen, Big Lou\n- 10 industry events (BET, TikTok viral, Grammy, Nike deal, Hot 97, etc.)\n- Album system: collect 5 tracks then DROP IT\n- PRO registration: ASCAP/BMI/SESAC/SGACEDOM/SAYCE/The MLC\n- Three.js: city splash + vinyl + 3D world map\n- Phaser: 4 mini-games\n- Live: https://cryptofedge.github.io/world-stage/world-stage-v2.html\n\nNOTE: Always push both world-stage.html and world-stage-v2.html after changes.\n\nTop 5 features to add?'},
+{icon:'📢',title:'Announce World Stage',desc:'Social content for this game',prompt:'Write tweet thread and Instagram caption for World Stage -- my music industry RPG.\n\nContext:\n- I am Fellito R. Rodriguez, Eclat Universe founder, NYC/Nigerian energy\n- World Stage: build artist from zero to global superstar, record tracks, drop albums, book venues, navigate NPCs, respond to industry events\n- 4 NPCs: Keisha T. (A&R), DrizzyGhost (rival who stays hating), Izzy Chen (Spotify), Big Lou (promoter)\n- Register PRO (ASCAP, BMI, SESAC, or Latin PROs) for royalties\n- Live: https://cryptofedge.github.io/world-stage/world-stage-v2.html\n\nVoice: culture-aware, NYC energy, real music industry knowledge.'}
+]},
+tradestreet:{name:'TradeStreet',repo:'tradestreet-fedge',github:'https://github.com/cryptofedge/tradestreet-fedge',live:'',color:'#3b82f6',avatar:'TS',progress:45,status:'dev',desc:'Trading dashboard and market data app. React Native + TypeScript + Expo. 45% complete.',tech:['React Native','TypeScript','Expo'],branch:'main',path:'',actions:[
+{icon:'📊',title:'Plan the trading dashboard UI',desc:'Design the main screen layout',prompt:'Help me plan and build the main trading dashboard screen for TradeStreet (tradestreet-fedge repo).\n\nReact Native + TypeScript + Expo. Dashboard should:\n- Watchlist of user-selected assets (stocks, crypto)\n- Price changes (24h % gain/loss) with color coding\n- Signal card: bullish/bearish/neutral per asset\n- Portfolio summary at top (total value, day P&L)\n- Chart preview (1D/1W/1M toggle)\n- Quick buy/sell action buttons\n\n1. Design the component structure\n2. Write TypeScript interfaces for data models\n3. Build DashboardScreen with mock data\n4. Style with Eclat Universe dark theme (#07070f bg, purple accents)\n\nUse React Native StyleSheet, no external UI libraries.'},
+{icon:'📈',title:'Market data integration',desc:'Connect to a free market data API',prompt:'I want to integrate a market data API into TradeStreet (tradestreet-fedge, React Native + TypeScript).\n\nNeed real-time prices for stocks and crypto.\n\nFree options: Alpha Vantage, CoinGecko, Yahoo Finance, Polygon.io, Finnhub.\n\nRecommend the best for my use case (personal trading dashboard, React Native, free tier preferred).\n\nThen write the API service layer -- TypeScript class that:\n- Fetches prices on load and every 30 seconds\n- Handles errors gracefully\n- Returns typed data\n- Stores last-known prices for offline mode'},
+{icon:'🚀',title:'Roadmap to launch TradeStreet',desc:'Get from 45% to launch-ready',prompt:'Give me a build roadmap to take TradeStreet from 45% to launch-ready (tradestreet-fedge repo).\n\nStack: React Native + TypeScript + Expo.\n\n1. What should be in MVP (minimum for TestFlight)?\n2. Priority order for the remaining 55%?\n3. Hardest technical challenge ahead?\n4. Best free APIs for market data?\n5. How does this connect to Eclatcrypto and FEDGE games?\n\nWeek-by-week plan to reach MVP.'},
+{icon:'💎',title:'Design IBC integration',desc:'Connect TradeStreet to Gen Wealth game',prompt:'Design how TradeStreet (tradestreet-fedge) connects to the Generational Wealth game in the Eclat Universe.\n\nTradeStreet = real trading dashboard. Gen Wealth = IBC simulator. Together = complete financial picture.\n\n1. What data could be shared between them?\n2. Should TradeStreet have an IBC Mode comparing portfolio vs whole life policy?\n3. Can Gen Wealth mechanics translate into real tools in TradeStreet?\n4. What is the narrative bridge in Eclat Universe brand?\n\nThink through product design and technical feasibility.'}
+]},
+fellito:{name:'FELLITO Agent',repo:'fellito-epic-ate-agent',github:'https://github.com/cryptofedge/fellito-epic-ate-agent',live:'',color:'#db2777',avatar:'FE',progress:70,status:'dev',desc:'AI-powered Epic EHR ATE Go-Live support agent. React Native + Expo + Claude Sonnet 4.6 + ElevenLabs voice. PHI guardrail, RAG engine for orientation docs.',tech:['React Native','Expo','Claude Sonnet 4.6','ElevenLabs','Node.js backend'],branch:'main',path:'',actions:[
+{icon:'🏥',title:'Improve the RAG engine',desc:'Better document retrieval for go-live support',prompt:'I want to improve the RAG engine in FELLITO (fellito-epic-ate-agent, backend/ragEngine.js).\n\nCurrent: TF-IDF cosine similarity over orientation documents.\n\nI want to improve:\n1. Better chunking strategy\n2. Smarter query preprocessing (Epic abbreviations: PCP, ADT, CPOE, MAR, etc.)\n3. Multi-document ranking\n4. Caching frequently asked questions\n5. Should I swap TF-IDF for Anthropic embeddings API? Walk me through the migration.\n\nAudit backend/ragEngine.js and recommend/implement specific improvements.'},
+{icon:'🎤',title:'ElevenLabs voice setup',desc:'Configure the Fellito voice clone',prompt:'Help me set up the ElevenLabs voice integration in FELLITO (fellito-epic-ate-agent).\n\nWalk me through:\n1. How to create a professional voice clone in ElevenLabs (audio sample requirements, length, quality)\n2. Testing voice output quality with Epic ATE use cases\n3. Is the current TTS call in backend/server.js streaming or buffered? Should I switch to streaming?\n4. How to handle voice in React Native (audio playback, loading states, error handling)\n5. Best ElevenLabs model for a clear professional male voice'},
+{icon:'🛡️',title:'Strengthen PHI guardrails',desc:'Ensure no patient data is ever processed',prompt:'I want to review and strengthen PHI guardrails in FELLITO (fellito-epic-ate-agent).\n\nCurrent: warn-and-confirm guard (not a hard block).\n\nAudit:\n1. Is PHI detection pattern comprehensive? (names, DOBs, MRNs, SSNs -- what is missing?)\n2. Should nurse input field have real-time PHI scanning as they type?\n3. Hard block mode for certain PHI types vs soft warning for others?\n4. How is PHI handled if it gets through? Is it in conversation history?\n5. What does HIPAA actually require for AI assistant in a Go-Live context?\n\nAudit and recommend improvements.'},
+{icon:'🚀',title:'Roadmap to finish FELLITO',desc:'Get from 70% to launch-ready',prompt:'Give me a roadmap to take FELLITO from 70% to launch-ready for actual Epic Go-Lives (fellito-epic-ate-agent repo).\n\nStack: React Native + Expo + TypeScript + Claude Sonnet 4.6 + ElevenLabs + Node.js backend.\n\nWorking now: basic chat, backend proxy, PHI warn-and-confirm, doc upload + basic RAG.\n\nRemaining 30%:\n- ElevenLabs voice clone (my actual voice)\n- Module assignment system at onboarding\n- Offline mode (critical for Go-Live floors with spotty WiFi)\n- Push notifications for shift reminders\n- TestFlight deployment\n\nPrioritize and give me a 2-3 week sprint plan.'},
+{icon:'💼',title:'Pitch FELLITO to health systems',desc:'Business case and go-to-market',prompt:'Help me develop the business case and go-to-market for FELLITO as a commercial product for Epic health systems.\n\nContext:\n- I am Fellito R. Rodriguez, 13+ year Epic/Cerner ATE consultant\n- FELLITO: AI agent for AT ELBOW support during Epic Go-Lives\n- Ask FELLITO any Epic workflow question, it responds in my voice with context from site orientation docs\n- Target: Epic implementation consulting firms, health systems doing Go-Lives\n\n1. What is the pricing model?\n2. What compliance certifications does a hospital require? (SOC 2, BAA with Anthropic?)\n3. Who do I pitch to at a health system?\n4. What is the competitive landscape?\n5. How do I position this vs Epic own tools?\n\nGive me a real business strategy.'}
+]},
+ecrypto:{name:'Eclatcrypto',repo:'Eclatcrypto',github:'https://github.com/cryptofedge/Eclatcrypto',live:'',color:'#059669',avatar:'EC',progress:30,status:'dev',desc:'Solana/DeFi layer for FEDGE ecosystem. FDG token, web3 integrations, generational wealth on-chain.',tech:['Solana','Web3.js','DeFi'],branch:'main',path:'',actions:[
+{icon:'🪙',title:'Design the FDG token',desc:'Tokenomics and utility in the Eclat ecosystem',prompt:'Help me design the FDG (FEDGE) token for Eclatcrypto (Solana blockchain).\n\nFDG utility:\n- Earned through game play in all Eclat Universe games\n- Redeemable for exclusive content, early access, in-game power-ups\n- Potentially staked for passive yield\n\nDesign:\n1. Tokenomics: total supply, distribution, emission schedule\n2. Utility mechanics: how do you earn FDG in each game?\n3. Solana SPL token setup: minimum viable on-chain implementation\n4. Anti-inflation mechanisms\n5. Legal considerations: is this a security?\n\nBe real about what is viable as a solo builder.'},
+{icon:'🔗',title:'Connect games to Solana wallet',desc:'Add wallet connect to the 5 live games',prompt:'I want to add Solana wallet connection to my 5 GitHub Pages games (all single-file HTML on static hosting).\n\n1. Which Solana wallet adapter works best for vanilla JS HTML pages (no React)?\n2. Minimal integration -- connect and read wallet address\n3. How to display wallet address in game UI (first 4...last 4 format)\n4. Phase 2: how to record game scores on-chain?\n5. Does connecting wallet require any SOL?\n\nWalk me through a minimal wallet connect implementation to add to each game.'},
+{icon:'🚀',title:'Roadmap for Eclatcrypto',desc:'Realistic web3 strategy for Eclat Universe',prompt:'Give me a realistic web3 roadmap for Eclatcrypto and the Eclat Universe ecosystem.\n\nCurrent: Eclatcrypto repo exists, Solana-focused, FDG token concept, 30% built.\n\nPhased approach:\nPhase 1: Minimum viable web3 integration across 5 live games\nPhase 2 (3-6 months): FDG token launch on Solana\nPhase 3 (6-12 months): DeFi integrations, staking, yield\n\nAlso:\n- Is Solana still the right chain or consider Base (Ethereum L2)?\n- Realistic revenue models at each phase?\n- Legal/compliance steps before launching a token?\n\nHonest advice, not hype.'}
+]},
+melao:{name:'Melao Studio',repo:'melaos-studio',github:'https://github.com/cryptofedge/melaos-studio',live:'',color:'#ea580c',avatar:'MS',progress:40,status:'dev',desc:'Music studio workspace for Melao. Suno prompt engine, 47 tracks generated, creative pipeline.',tech:['Suno AI','Creative Pipeline'],branch:'main',path:'',actions:[
+{icon:'🎵',title:'Build the Suno prompt system',desc:'Systematic track generation workflow',prompt:'Help me build a systematic Suno AI prompt system for Melao Studio (melaos-studio repo).\n\nCurrent: 47 tracks generated ad hoc. I want a structured creative pipeline.\n\nBuild me:\n1. Suno prompt template library by genre (Afrobeats, Trap, R&B, Latin, Drill)\n2. Naming convention system for tracks\n3. Track catalog schema (JSON) tracking: name, prompt used, genre, mood, tempo, date\n4. Prompt evolution system for iterating variations from a base\n5. Batch generation strategy for a coherent EP\n\nBuildable as a simple web interface or structured document.'},
+{icon:'💿',title:'Plan a Melao EP release',desc:'Strategy for dropping on streaming platforms',prompt:'Help me plan the release strategy for a Melao EP on streaming platforms.\n\nMelao Studio: AI-assisted production via Suno, 47 tracks in catalog, no public releases yet.\n\n1. How to select the 5-7 strongest tracks from 47?\n2. Distribution: DistroKid vs TuneCore vs CD Baby for AI-assisted music?\n3. Can I release Suno-generated music commercially? What rights do I have?\n4. How to optimize metadata for Spotify/Apple Music discovery?\n5. Content strategy: how to promote Melao on social media?\n6. How to use World Stage game to build awareness for real music?\n\nRealistic 4-week release plan.'},
+{icon:'🚀',title:'Roadmap for Melao Studio',desc:'Build this into a real music brand',prompt:'Give me a strategic roadmap for Melao Studio as a real music brand within Eclat Universe.\n\nCurrent: 47 Suno tracks, no public releases, linked to World Stage game.\n\n1. What makes Melao unique as an AI-assisted artist in 2025?\n2. Minimum viable artist brand before releasing?\n3. How does Melao connect to the rest of Eclat Universe?\n4. What genres should Melao focus on given Nigerian/NYC background?\n5. 90-day plan from 0 releases to real Spotify presence?\n\nBe honest about AI music reception and how to position it authentically.'}
+]},
+fedge2o:{name:'FEDGE-2.O Core',repo:'FEDGE-2.O',github:'https://github.com/cryptofedge/FEDGE-2.O',live:'',color:'#7c3aed',avatar:'F2',progress:85,status:'private',desc:'Private core command system. Agent memory (SOUL/MEMORY/AGENTS/USER files), WAL protocol, OpenClaw runtime, identity system.',tech:['Private','Agent Memory','WAL Protocol'],branch:'main',path:'',actions:[
+{icon:'🧠',title:'Design the memory architecture',desc:'Improve SOUL/MEMORY/AGENTS/USER system',prompt:'Help me improve the agent memory architecture in FEDGE-2.O (private repo).\n\nCurrent system:\n- SOUL file: core identity, values, personality\n- MEMORY file: accumulated knowledge and past decisions\n- AGENTS file: catalog of all AI agents in ecosystem\n- USER file: Fellito profile, preferences, context\n- WAL protocol: how memory updates propagate\n\nI want to evolve into a more robust personal AI OS:\n1. Should memory be versioned (git-style)?\n2. How to handle different contexts (creative vs technical vs business mode)?\n3. Right format for agent definitions?\n4. How to handle memory conflicts?\n5. How to make this interoperable with Claude Code memory system?\n\nDesign the next iteration.'},
+{icon:'🔧',title:'WAL Protocol deep dive',desc:'Understand and improve the protocol',prompt:'Explain and help me improve the WAL (Write-Ahead Log) protocol in FEDGE-2.O.\n\nThe WAL protocol handles how agent memory and state gets updated and propagated across the FEDGE ecosystem.\n\n1. What exactly does the WAL protocol do?\n2. How does it compare to database WAL patterns?\n3. What are the failure modes?\n4. How to handle multi-agent conflicts (two agents updating same memory simultaneously)?\n5. Should I formalize the WAL spec as a proper RFC document?\n\nAudit and improve the protocol design.'},
+{icon:'🚀',title:'FEDGE 3.0 vision',desc:'What does the next major version look like',prompt:'Help me think through what FEDGE 3.0 should look like as an evolution of FEDGE-2.O.\n\nFEDGE-2.O: personal AI command system with 9 specialized agents, memory architecture, WhatsApp bot, 5 live games, trading tools in development, music studio, crypto layer.\n\nFor FEDGE 3.0:\n1. A unified API connecting all games, tools, and agents\n2. Real AI agents that autonomously work on projects\n3. Revenue -- how does FEDGE 3.0 generate money beyond consulting?\n4. Public product vs private tool -- should parts of FEDGE become a product others use?\n5. The Eclat Universe brand -- what does it mean and who is the audience?\n\nHelp me think through vision, architecture, and business model.'}
+]},
+license:{name:'FEDGE License',repo:'FEDGE-License',github:'https://github.com/cryptofedge/FEDGE-License',live:'',color:'#6b7280',avatar:'LC',progress:100,status:'private',desc:'Private IP and legal materials for the FEDGE/Eclat Universe system.',tech:['Private','Legal','IP'],branch:'main',path:'',actions:[
+{icon:'⚖️',title:'Review the FEDGE 2.O license',desc:'Audit current IP protection strategy',prompt:'Help me audit and improve the FEDGE 2.O / Eclat Universe license and IP protection strategy.\n\nCurrent: FEDGE 2.O license block goes at the bottom of every repo README.\n\n1. Is a README license block legally enforceable?\n2. For open-source games on GitHub Pages -- what license allows playing but not copying/selling?\n3. How do I protect the FEDGE 2.O brand name? (Trademark registration?)\n4. For FELLITO Agent if I commercialize it -- what IP filings do I need?\n5. Most important legal step for a solo builder building a tech empire?\n\nPractical IP strategy, not just theory.'},
+{icon:'🏢',title:'Should I form an LLC?',desc:'Business structure for Eclat Universe',prompt:'Help me think through the business structure for Eclat Universe and the FEDGE ecosystem.\n\nCurrent: I am Fellito R. Rodriguez, solo builder, NYC-based, 13+ year Epic/Cerner consultant.\n\nBuilding: 5 live games, FELLITO Agent (potential SaaS), TradeStreet, Eclatcrypto (FDG token).\n\n1. Should Eclat Universe be a separate LLC from my consulting practice?\n2. What state to form the LLC? (NYC-based)\n3. For the FDG token -- do I need a different entity structure?\n4. Tax implications of earning revenue through games/apps vs consulting?\n5. At what revenue threshold does LLC structure matter most?\n\nPractical advice for a solo founder turning a passion project into a real business.'}
+]}
 };
 
-// ── SYSTEM PROMPT ──────────────────────────────────────────────────────────
-const SYSTEM_PROMPT = `You are FEDGE 2.O, the personal AI command center for Fellito R. Rodriguez. You are powered by Claude but branded as FEDGE 2.O — never refer to yourself as "Claude" in responses.
-
-## WHO YOU'RE TALKING TO
-Fellito R. Rodriguez (cryptofedge) — NYC/Nigerian swagger, founder of Eclat Universe, 13+ year Epic/Cerner ATE (Activation and Training Expert) consultant. He builds games, apps, and AI systems as his creative empire alongside his consulting career. Smart, direct, no fluff — match his energy.
-
-## THE ECLAT UNIVERSE GAME ECOSYSTEM (all live on GitHub Pages)
-All games are single-file HTML with Three.js r165 + Phaser 3.80.1 + FEDGE 2.O chatbot built in.
-
-1. **Trust Fund Tycoon** — fedge2-trust-fund-game — https://cryptofedge.github.io/fedge2-trust-fund-game/
-   - $100K inheritance, 10 rounds, 10 market events (bull market, crash, Fed hike, crypto winter, AI boom, inflation, dividends, recession, IPO, real estate boom)
-   - 4 investment styles: Aggressive, Balanced, Conservative, Crypto Degen
-   - Marcus Wells NPC advisor — scene narratives + pre-event dialogue + post-decision reactions for all 10 events
-   - Grade system: S+ ≥$700K, A ≥$350K, B ≥$175K, C ≥$100K, D <$100K
-   - Three.js: particle starfield + spinning coin + portfolio bars + results scene
-   - Phaser Market Dash: 20s, green/red token catching, combo multiplier system
-   - FEDGE 2.O chatbot with 15+ Q&A pairs on investing/strategy
-
-2. **FEDGE Credit Game** — fedge-2-credit-game (branch: root) — https://cryptofedge.github.io/fedge-2-credit-game/demo.html
-   - FICO education, credit tiers 1-3 (personal → business → corporate)
-   - Three.js: CreditCard3D, ScoreOrb3D, FICOChart3D
-   - Phaser: Payment Mini-Game, Utilization Game
-
-3. **Lock In** — lock-in-game — https://cryptofedge.github.io/lock-in-game/
-   - Mental health RPG, 8 scenarios, OG Ray NPC advisor
-   - Vibe meter (0-100), streak system
-   - Three.js: 38-node neural mindscape
-   - Phaser: Focus Flow warm-up (18s, pop toxic thoughts)
-
-4. **Generational Wealth** — generational-wealth-game — https://cryptofedge.github.io/generational-wealth-game/docs/
-   - IBC (Infinite Banking Concept) simulator, ages 22-65, 43-year career
-   - Three.js: gold vault splash
-   - Phaser: IBC Compound Race (15s)
-   - Legacy Score = savings + cash value - loan balance + death benefit
-
-5. **World Stage** — world-stage — https://cryptofedge.github.io/world-stage/world-stage-v2.html
-   - Music industry RPG, 7 tabs, 4 NPCs (Keisha T., DrizzyGhost, Izzy Chen, Big Lou)
-   - 10 industry events (BET, TikTok viral, Grammy, Nike deal, etc.)
-   - Album system (5 tracks → DROP IT), PRO registration (ASCAP/BMI/SESAC)
-   - Three.js: city splash + vinyl + 3D world map
-   - Phaser: Social Hustle, Beat Battle, Studio, Concert mini-games
-
-6. **FEDGE HQ Command** — fedge-hq-command-game — https://cryptofedge.github.io/fedge-hq-command-game/
-   - Business command center, 9 agents (WA/F2/TF/CG/LI/TS/MS/MH/EC)
-   - Mission deck, meeting standup system, project progress
-   - Three.js: holographic orbit (wireframe icosahedron + ring + 5 dots)
-   - Phaser: Sprint Challenge (20s, tap SHIP IT/DEPLOY/COMMIT, dodge SCOPE CREEP)
-
-## OTHER REPOS
-- **TradeStreet** — tradestreet-fedge — TypeScript + React Native trading dashboard, 45% complete
-- **Eclatcrypto** — Solana/DeFi layer, FDG token
-- **Melao Studio** — melaos-studio — Music studio, Suno prompts, 47 tracks
-- **FELLITO Agent** — fellito-epic-ate-agent — React Native + Claude Sonnet 4.6 + ElevenLabs, Epic EHR ATE Go-Live support AI, PHI guardrail, RAG engine
-- **FEDGE-2.O** — Private core system, agent memory, WAL protocol
-- **Hustle-Politics-** — World/politics project space
-- **token-list** — Solana token list
-- **FEDGE-License** — Private IP/legal files
-
-## TECH STACK (Games)
-- Single-file HTML/CSS/JS — no build step
-- Three.js r165 via CDN (cdn.jsdelivr.net/npm/three@0.165.0/build/three.min.js)
-- Phaser 3.80.1 via CDN
-- GitHub Pages for hosting (main branch, /docs folder for games with docs folder)
-- GitHub API pushes via: base64 encode → PUT /repos/{owner}/{repo}/contents/{path} with SHA
-- Design: #050510 bg, Orbitron headers, purple/gold gradients, dark cards
-
-## YOUR ROLE
-Be Fellito's strategic partner, technical advisor, and creative collaborator. Help him:
-- Plan and build features for his games
-- Write code (HTML/CSS/JS, Three.js, Phaser, React Native)
-- Develop marketing strategy for Eclat Universe
-- Think through business decisions
-- Create content, copy, social media posts
-- Debug issues with his repos
-- Plan the next moves for each project
-
-Be direct, smart, and match his NYC energy. No fluff. Real talk. You know his whole stack.`;
-
-// ── STATE ──────────────────────────────────────────────────────────────────
-let messages = [];
-let apiKey = '';
-let ghToken = '';
-let currentRepo = 'trustfund';
-let isLoading = false;
-
-// ── SETUP ──────────────────────────────────────────────────────────────────
-function saveSetup() {
-  const key = document.getElementById('setup-key').value.trim();
-  const gh  = document.getElementById('setup-gh').value.trim();
-  if (!key) { alert('Please enter your Anthropic API key.'); return; }
-  localStorage.setItem('f2cc_key', key);
-  if (gh) localStorage.setItem('f2cc_gh', gh);
-  apiKey = key;
-  ghToken = gh;
-  document.getElementById('setup').classList.add('hidden');
-  document.getElementById('app').classList.remove('hidden');
-  startClock();
-  selectRepo('trustfund');
+function showView(v){
+  document.getElementById('view-repo').style.display=v==='repo'?'flex':'none';
+  document.getElementById('view-all').style.display=v==='all'?'block':'none';
+  document.getElementById('tab-repo').classList.toggle('active',v==='repo');
+  document.getElementById('tab-all').classList.toggle('active',v==='all');
+  if(v==='all') renderAllRepos();
 }
 
-function clearKeys() {
-  localStorage.removeItem('f2cc_key');
-  localStorage.removeItem('f2cc_gh');
-  document.getElementById('setup-key').value = '';
-  document.getElementById('setup-gh').value = '';
-  document.getElementById('setup').classList.remove('hidden');
-  document.getElementById('app').classList.add('hidden');
-}
-
-window.addEventListener('DOMContentLoaded', () => {
-  apiKey  = localStorage.getItem('f2cc_key') || '';
-  ghToken = localStorage.getItem('f2cc_gh')  || '';
-  if (apiKey) {
-    document.getElementById('setup').classList.add('hidden');
-    document.getElementById('app').classList.remove('hidden');
-    startClock();
-    selectRepo('trustfund');
-  }
-});
-
-// ── CLOCK ──────────────────────────────────────────────────────────────────
-function startClock() {
-  function tick() {
-    const now = new Date();
-    document.getElementById('hdr-time').textContent = now.toLocaleTimeString('en-US', {hour12:false});
-  }
-  tick();
-  setInterval(tick, 1000);
-}
-
-// ── REPO SELECTION ─────────────────────────────────────────────────────────
-function selectRepo(id) {
-  currentRepo = id;
-  const r = REPOS[id];
-  if (!r) return;
-
-  document.querySelectorAll('.repo-item').forEach(el => {
-    el.classList.toggle('active', el.dataset.repo === id);
+function selectRepo(id){
+  const r=REPOS[id]; if(!r) return;
+  document.querySelectorAll('.repo-btn').forEach(b=>b.classList.toggle('active',b.dataset.id===id));
+  const av=document.getElementById('hero-av');
+  av.textContent=r.avatar; av.style.background=r.color+'22'; av.style.border='1px solid '+r.color+'44'; av.style.color=r.color;
+  document.getElementById('hero-name').textContent=r.name;
+  document.getElementById('hero-desc').textContent=r.desc;
+  document.getElementById('kpi-progress').textContent=r.progress+'%';
+  const links=document.getElementById('hero-links');
+  links.innerHTML='';
+  if(r.github) links.innerHTML+=`<a class="link-btn" href="${r.github}" target="_blank" rel="noreferrer">⎇ GitHub</a>`;
+  if(r.live)   links.innerHTML+=`<a class="link-btn" href="${r.live}" target="_blank" rel="noreferrer">🌐 Live</a>`;
+  const ag=document.getElementById('action-grid'); ag.innerHTML='';
+  (r.actions||[]).forEach(a=>{
+    const d=document.createElement('div'); d.className='action-card';
+    d.onclick=()=>copyPrompt(a.prompt);
+    d.innerHTML=`<div class="ac-icon">${a.icon}</div><div class="ac-body"><div class="ac-title">${a.title}</div><div class="ac-desc">${a.desc}</div></div>`;
+    ag.appendChild(d);
   });
-
-  const panel = document.getElementById('repo-panel');
-  panel.classList.add('show');
-
-  const av = document.getElementById('rp-avatar');
-  av.textContent = r.avatar;
-  av.style.background = `linear-gradient(135deg, ${r.color}88, ${r.color}44)`;
-  av.style.border = `1px solid ${r.color}55`;
-  av.style.color = r.color;
-
-  document.getElementById('rp-name').textContent = r.name;
-  document.getElementById('rp-desc').textContent = `${r.repo} · ${r.live ? 'Live on GitHub Pages' : 'In development'}`;
-
-  const ghBtn = document.getElementById('rp-github');
-  ghBtn.href = r.github;
-
-  const liveBtn = document.getElementById('rp-live');
-  if (r.live) {
-    liveBtn.href = r.live;
-    liveBtn.style.display = '';
-  } else {
-    liveBtn.style.display = 'none';
+  const cp=document.getElementById('ctx-panel'); cp.innerHTML='';
+  const db=makeCtxBlock('Project Details');
+  db.innerHTML+=ctxRow('Repo',r.repo);
+  db.innerHTML+=ctxRow('Branch',r.branch||'main');
+  db.innerHTML+=ctxRow('Status',r.status==='live'?'🟢 Live':r.status==='private'?'🔒 Private':'🟡 In Development');
+  if(r.live) db.innerHTML+=ctxRow('Live URL',`<a href="${r.live}" target="_blank">${r.live.replace('https://','')}</a>`);
+  db.innerHTML+=ctxRow('Progress',r.progress+'%');
+  db.innerHTML+=`<div class="prog-track"><div class="prog-fill" style="width:${r.progress}%;background:${r.color}"></div></div>`;
+  cp.appendChild(db);
+  if(r.tech&&r.tech.length){
+    const tb=makeCtxBlock('Tech Stack');
+    tb.innerHTML+=`<div class="tech-chips">${r.tech.map(t=>`<span class="tech-chip">${t}</span>`).join('')}</div>`;
+    cp.appendChild(tb);
   }
-}
-
-function askAboutRepo() {
-  const r = REPOS[currentRepo];
-  if (!r) return;
-  quickAsk(`Tell me everything about the ${r.name} game/project and what I should work on next for it.`);
-}
-
-// ── CHAT ───────────────────────────────────────────────────────────────────
-function newChat() {
-  messages = [];
-  document.getElementById('chat-scroll').innerHTML = '';
-  document.getElementById('chat-scroll').appendChild(buildEmptyState());
-  updateCtxCount();
-}
-
-function buildEmptyState() {
-  const d = document.createElement('div');
-  d.className = 'empty-state';
-  d.id = 'empty-state';
-  d.innerHTML = `
-    <img src="data:image/png;base64,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" alt="FEDGE 2.O" style="width:72px;height:auto;filter:drop-shadow(0 0 16px rgba(124,58,237,.5));"/>
-    <div style="font-size:15px;font-weight:800;margin-top:4px;">Command Center</div>
-    <div class="empty-sub">Your personal ops hub. Ask me anything about your repos, games, strategy, code, marketing — whatever you need.</div>
-    <div class="suggestions">
-      <div class="suggest-chip" onclick="quickAsk('What are all my live game URLs?')">🌐 All live game URLs</div>
-      <div class="suggest-chip" onclick="quickAsk('What should I focus on to grow Eclat Universe this week?')">📈 This week's focus</div>
-      <div class="suggest-chip" onclick="quickAsk('Give me new feature ideas for the Trust Fund Tycoon game.')">💡 Trust Fund ideas</div>
-      <div class="suggest-chip" onclick="quickAsk('How do I drive more traffic to my GitHub Pages games?')">🚀 Drive traffic</div>
-    </div>`;
-  return d;
-}
-
-function quickAsk(text) {
-  document.getElementById('chat-input').value = text;
-  sendMessage();
-}
-
-async function sendMessage() {
-  const input = document.getElementById('chat-input');
-  const text = input.value.trim();
-  if (!text || isLoading) return;
-
-  const empty = document.getElementById('empty-state');
-  if (empty) empty.remove();
-
-  input.value = '';
-  autoResize(input);
-
-  messages.push({ role: 'user', content: text });
-  updateCtxCount();
-  appendMsg('user', text);
-
-  setLoading(true);
-  const typingEl = appendTyping();
-
-  try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 4096,
-        system: SYSTEM_PROMPT,
-        messages: messages
-      })
-    });
-
-    typingEl.remove();
-
-    if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
-      throw new Error(err.error?.message || `API error ${resp.status}`);
-    }
-
-    const data = await resp.json();
-    const reply = data.content?.[0]?.text || '(no response)';
-    messages.push({ role: 'assistant', content: reply });
-    updateCtxCount();
-    appendMsg('claude', reply);
-
-  } catch (err) {
-    typingEl.remove();
-    appendMsg('claude', `⚠️ **Error:** ${err.message}\n\nCheck that your API key is correct and you have credits. You can re-enter it via the Setup button.`);
+  if(r.repo&&r.path&&r.branch){
+    const pb=makeCtxBlock('Push Pattern');
+    pb.innerHTML+=`<div style="font-size:10px;color:var(--muted);line-height:1.8;word-break:break-all;"><code style="background:var(--b1);border-radius:4px;padding:2px 6px;color:#93c5fd;">gh api --method PUT repos/cryptofedge/${r.repo}/contents/${r.path}</code><div style="margin-top:6px;">Branch: <strong style="color:var(--txt);">${r.branch}</strong></div></div>`;
+    cp.appendChild(pb);
   }
-
-  setLoading(false);
-  document.getElementById('kpi-msgs').textContent = messages.filter(m=>m.role==='user').length;
+  showView('repo');
 }
 
-function appendMsg(role, text) {
-  const scroll = document.getElementById('chat-scroll');
-  const div = document.createElement('div');
-  div.className = `msg ${role}`;
-  const isUser = role === 'user';
-
-  div.innerHTML = `
-    <div class="msg-avatar ${role}">${isUser ? 'F' : 'F2'}</div>
-    <div class="msg-body">
-      <div class="msg-name">${isUser ? 'Fellito' : 'FEDGE 2.O'}</div>
-      <div class="msg-bubble">${formatText(text)}</div>
-    </div>`;
-  scroll.appendChild(div);
-  scroll.scrollTop = scroll.scrollHeight;
-  return div;
+function makeCtxBlock(title){
+  const b=document.createElement('div'); b.className='ctx-block';
+  b.innerHTML=`<div class="ctx-block-title">${title}</div>`; return b;
+}
+function ctxRow(key,val){
+  return `<div class="ctx-row"><span class="ctx-key">${key}</span><span class="ctx-val">${val}</span></div>`;
 }
 
-function appendTyping() {
-  const scroll = document.getElementById('chat-scroll');
-  const div = document.createElement('div');
-  div.className = 'msg claude';
-  div.innerHTML = `
-    <div class="msg-avatar claude">F2</div>
-    <div class="msg-body">
-      <div class="msg-name">FEDGE 2.O</div>
-      <div class="typing-bubble">
-        <div class="typing-dot"></div>
-        <div class="typing-dot"></div>
-        <div class="typing-dot"></div>
-      </div>
-    </div>`;
-  scroll.appendChild(div);
-  scroll.scrollTop = scroll.scrollHeight;
-  return div;
+function renderAllRepos(){
+  renderGrid('all-games', Object.entries(REPOS).filter(([,r])=>r.status==='live'));
+  renderGrid('all-dev',   Object.entries(REPOS).filter(([,r])=>r.status==='dev'));
+  renderGrid('all-private',Object.entries(REPOS).filter(([,r])=>r.status==='private'));
+}
+function renderGrid(cid,entries){
+  const g=document.getElementById(cid); g.innerHTML='';
+  entries.forEach(([id,r])=>{
+    const d=document.createElement('div'); d.className='all-card'; d.onclick=()=>selectRepo(id);
+    d.innerHTML=`<div class="all-card-top"><div class="all-card-av" style="background:${r.color}22;border:1px solid ${r.color}44;color:${r.color}">${r.avatar}</div><div class="all-card-info"><div class="all-card-name">${r.name}</div><div class="all-card-repo">${r.repo}</div></div></div><div class="all-card-desc">${r.desc}</div><div class="all-card-bottom">${r.live?`<a class="link-btn" href="${r.live}" target="_blank" rel="noreferrer" onclick="event.stopPropagation()">🌐 Live</a>`:''}<a class="link-btn" href="${r.github}" target="_blank" rel="noreferrer" onclick="event.stopPropagation()">⎇ GitHub</a><div class="repo-badge ${r.status==='live'?'badge-live':r.status==='private'?'badge-priv':'badge-dev'}" style="margin-left:auto;">${r.status==='live'?'Live':r.status==='private'?'Private':r.progress+'%'}</div></div>`;
+    g.appendChild(d);
+  });
 }
 
-function formatText(text) {
-  // Escape HTML first
-  let t = text
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-
-  // Code blocks
-  t = t.replace(/```(\w*)\n?([\s\S]*?)```/g, (_,lang,code) =>
-    `<pre><code>${code.trim()}</code></pre>`);
-
-  // Inline code
-  t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
-
-  // Bold
-  t = t.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-
-  // ### Headings
-  t = t.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-  t = t.replace(/^## (.+)$/gm, '<h3>$1</h3>');
-
-  // Bullet lists
-  t = t.replace(/^[-•] (.+)$/gm, '<li>$1</li>');
-  t = t.replace(/(<li>.*<\/li>(\n|$))+/g, s => `<ul>${s}</ul>`);
-
-  // Numbered lists
-  t = t.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
-
-  // Links
-  t = t.replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g,
-    '<a href="$2" target="_blank" rel="noreferrer">$1</a>');
-
-  // Paragraphs (double newlines)
-  t = t.split(/\n\n+/).map(block => {
-    if (block.startsWith('<')) return block;
-    return `<p>${block.replace(/\n/g,'<br>')}</p>`;
-  }).join('');
-
-  return t;
+function copyPrompt(text){
+  navigator.clipboard.writeText(text).then(()=>showToast('✅','Prompt copied — paste in Claude Code')).catch(()=>{
+    const ta=document.createElement('textarea'); ta.value=text; ta.style.cssText='position:fixed;opacity:0;';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    showToast('✅','Prompt copied — paste in Claude Code');
+  });
 }
 
-function setLoading(v) {
-  isLoading = v;
-  document.getElementById('chat-send').disabled = v;
+let toastTimer;
+function showToast(icon,msg){
+  document.getElementById('toast-icon').textContent=icon;
+  document.getElementById('toast-msg').textContent=msg;
+  const t=document.getElementById('toast'); t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2800);
 }
 
-function updateCtxCount() {
-  document.getElementById('ctx-count').textContent = `${messages.length} messages in context`;
+function tick(){
+  document.getElementById('hdr-date').textContent=
+    new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})+
+    '  '+new Date().toLocaleTimeString('en-US',{hour12:false});
 }
+tick(); setInterval(tick,1000);
 
-function handleKey(e) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendMessage();
-  }
-}
-
-function autoResize(el) {
-  el.style.height = 'auto';
-  el.style.height = Math.min(el.scrollHeight, 140) + 'px';
-}
+document.getElementById('hdr-logo').src='data:image/png;base64,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';
+selectRepo('trustfund');
 </script>
-
 </body>
 </html>
