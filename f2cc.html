@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#07070f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>FEDGE 2.O — Command Center</title>
 <style>
 :root{
@@ -124,6 +127,56 @@ main{overflow-y:auto;display:flex;flex-direction:column;}
 .all-card-repo{font-size:10px;color:var(--muted);}
 .all-card-desc{font-size:11px;color:var(--muted);line-height:1.5;}
 .all-card-bottom{display:flex;gap:6px;flex-wrap:wrap;}
+
+/* ── MOBILE (≤ 768px) ── */
+@media(max-width:768px){
+  html,body{height:100%;overflow:hidden;}
+  #shell{grid-template-columns:1fr;grid-template-rows:52px 1fr auto;}
+  /* header */
+  header{padding:0 12px;gap:8px;}
+  .hdr-logo{height:28px;}
+  .hdr-title{display:none;}
+  .hdr-divider{display:none;}
+  .hdr-date{display:none;}
+  .hdr-status{font-size:10px;}
+  .relay-status{margin-left:auto;}
+  /* hide sidebar — show as bottom sheet instead */
+  aside{display:none;position:fixed;inset:0;z-index:100;overflow-y:auto;background:var(--s1);padding-bottom:80px;}
+  aside.mob-open{display:flex;flex-direction:column;}
+  /* main takes full width */
+  main{height:100%;overflow-y:auto;}
+  /* hero */
+  .repo-hero{padding:12px 16px;gap:10px;}
+  .repo-av{width:38px;height:38px;font-size:13px;border-radius:9px;}
+  .repo-hero-name{font-size:14px;}
+  .repo-hero-desc{font-size:11px;}
+  .repo-hero-links{gap:6px;}
+  .link-btn{padding:5px 10px;font-size:10px;}
+  /* kpi */
+  .kpi-row{grid-template-columns:repeat(2,1fr);padding:12px 16px;gap:8px;}
+  .kpi-val{font-size:18px;}
+  /* panels: stack vertically */
+  .panels{grid-template-columns:1fr;overflow-y:auto;}
+  .panel{padding:14px 16px;overflow-y:visible;}
+  /* action cards */
+  .ac-btn-copy,.ac-btn-exec{padding:5px 11px;font-size:11px;min-height:32px;}
+  /* all repos */
+  .all-grid{grid-template-columns:1fr;}
+  /* bottom nav bar */
+  .mob-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--s1);border-top:1px solid var(--b1);z-index:50;height:56px;padding-bottom:env(safe-area-inset-bottom,0);}
+  .mob-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px;font-weight:700;letter-spacing:.04em;transition:color .15s;}
+  .mob-nav-btn.active{color:var(--purple);}
+  .mob-nav-btn svg{width:20px;height:20px;}
+  /* push main content above bottom nav */
+  main{padding-bottom:56px;}
+  /* exec modal full screen on mobile */
+  .exec-overlay{padding:0;}
+  .exec-modal{border-radius:0;height:100%;max-height:100%;}
+}
+@media(min-width:769px){
+  .mob-nav{display:none;}
+  aside{display:flex!important;}
+}
 </style>
 </head>
 <body>
@@ -228,6 +281,22 @@ main{overflow-y:auto;display:flex;flex-direction:column;}
   </div>
 </div>
 
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mob-nav">
+  <button class="mob-nav-btn active" id="mob-btn-repos" onclick="mobShow('repos')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Repos
+  </button>
+  <button class="mob-nav-btn" id="mob-btn-main" onclick="mobShow('main')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
+    Command
+  </button>
+  <button class="mob-nav-btn" id="mob-btn-all" onclick="showView('all');mobShow('main')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>
+    All Repos
+  </button>
+</nav>
+
 <script>
 const REPOS = {
 trustfund:{name:'Trust Fund Tycoon',repo:'fedge2-trust-fund-game',github:'https://github.com/cryptofedge/fedge2-trust-fund-game',live:'https://cryptofedge.github.io/fedge2-trust-fund-game/',color:'#f5c842',avatar:'TF',progress:95,status:'live',desc:'$100K inheritance, 10 market events, Marcus Wells NPC advisor, Three.js + Phaser Market Dash, FEDGE 2.O chatbot',tech:['Three.js r165','Phaser 3.80.1','GitHub Pages','Single-file HTML'],branch:'main',path:'docs/index.html',actions:[
@@ -308,9 +377,21 @@ function showView(v){
   if(v==='all') renderAllRepos();
 }
 
+function mobShow(view){
+  const aside=document.querySelector('aside');
+  const isMob=window.innerWidth<=768;
+  if(!isMob)return;
+  if(view==='repos'){aside.classList.add('mob-open');}
+  else{aside.classList.remove('mob-open');}
+  document.querySelectorAll('.mob-nav-btn').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('mob-btn-'+view);
+  if(btn)btn.classList.add('active');
+}
+
 function selectRepo(id){
   const r=REPOS[id]; if(!r) return;
   document.querySelectorAll('.repo-btn').forEach(b=>b.classList.toggle('active',b.dataset.id===id));
+  if(window.innerWidth<=768)mobShow('main');
   const av=document.getElementById('hero-av');
   av.textContent=r.avatar; av.style.background=r.color+'22'; av.style.border='1px solid '+r.color+'44'; av.style.color=r.color;
   document.getElementById('hero-name').textContent=r.name;
